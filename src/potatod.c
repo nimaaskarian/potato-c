@@ -6,17 +6,20 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-Timer timer;
-
 typedef struct {
-  _Bool flush;
+  _Bool flush, notification;
 } App;
+
+Timer timer;
+App app;
 
 void skip_signal_handler(int signum)
 {
   cycle_type(&timer);
   set_timer_seconds(&timer);
-  send_notification_based_on_timertype(timer.type);
+
+  if (app.notification)
+    send_notification_based_on_timertype(timer.type);
 }
 void pause_signal_handler(int signum)
 {
@@ -59,16 +62,18 @@ void quit(int signum)
   if (signum == SIGQUIT)
     exit(0);
   exit(1);
-
 }
 
-void read_options(int argc, char*argv[], App * app)
+void read_options_to_app(int argc, char*argv[], App * app)
 {
   int ch;
-  while ((ch = getopt(argc, argv, "f")) != -1) {
+  while ((ch = getopt(argc, argv, "fn")) != -1) {
     switch (ch) {
       case 'f':
         app->flush = 1;
+        break;
+      case 'n':
+        app->notification = 1;
         break;
     }
   }
@@ -82,9 +87,10 @@ void start_app_loop(Timer* timer, App app)
         initialize_timer(timer);
       else 
         cycle_type(timer);
-      send_notification_based_on_timertype(timer->type);
-
       set_timer_seconds(timer);
+
+      if (app.notification)
+        send_notification_based_on_timertype(timer->type);
     }
     print_time_left_not_paused(timer);
     if (app.flush) 
@@ -100,18 +106,21 @@ void assign_signals_to_functions()
   signal(SIGQUIT, quit);
   signal(SIGINT, quit);
   signal(SIGTERM, quit);
-
   signal(SIG_PAUSE, pause_signal_handler);
   signal(SIG_UNPAUSE, unpause_signal_handler);
   signal(SIG_TPAUSE, toggle_pause_signal_handler);
   signal(SIG_SKIP, skip_signal_handler);
-
-
 }
+
+void initialize_app(App * app)
+{
+  app->flush = 0;
+  app->notification = 0;
+}
+
 int main(int argc, char *argv[])
-{ 
-  App app;
-  app.flush = 0;
+{
+  initialize_app(&app);
 
   create_pid_file();
   assign_signals_to_functions();
@@ -119,9 +128,11 @@ int main(int argc, char *argv[])
   initialize_timer(&timer);
   set_timer_seconds(&timer);
 
-  send_notification_based_on_timertype(timer.type);
+  read_options_to_app(argc, argv, &app);
 
-  read_options(argc, argv, &app);
+  if (app.notification)
+    send_notification_based_on_timertype(timer.type);
+
   start_app_loop(&timer, app);
 
   return EXIT_SUCCESS;
