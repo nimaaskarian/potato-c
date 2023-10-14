@@ -1,3 +1,4 @@
+#include <linux/limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -34,40 +35,51 @@ void handle_dir_member_list(char * str, int index)
   printf("%d\t%s\n", index, str);
 }
 
-#define handle_kill_member_list(NAME, SIG) void handle_##NAME##_member_list(char *str, int index)\
+#define handle_kill(NAME, SIG) void handle_##NAME(char *str, int index)\
 {\
   kill(atoi(str), SIG);\
 }
 
 #define case_index(ch,function) case ch:\
 {\
-int index = EVERY_MEMBER;\
-if (optarg != NULL)\
-  sscanf(optarg, "%d", &index);\
-run_on_dir_members(function, index);\
-break;\
+  int index = EVERY_MEMBER;\
+  if (optarg != NULL)\
+    sscanf(optarg, "%d", &index);\
+  run_on_dir_members(function, index);\
+  break;\
 }
 
-handle_kill_member_list(pause, SIG_PAUSE);
-handle_kill_member_list(quit, SIGQUIT);
-handle_kill_member_list(unpause, SIG_UNPAUSE);
-handle_kill_member_list(skip, SIG_SKIP);
-handle_kill_member_list(toggle_pause, SIG_TPAUSE);
+handle_kill(pause, SIG_PAUSE);
+handle_kill(quit, SIGQUIT);
+handle_kill(unpause, SIG_UNPAUSE);
+handle_kill(skip, SIG_SKIP);
+handle_kill(toggle_pause, SIG_TPAUSE);
 
+void remove_potato_pid_file(char *name, int index)
+{
+  char path[PATH_MAX];
+  snprintf(path, PATH_MAX, "%s/%s", POTATO_PIDS_DIRECTORY, name);
 
+  remove(path);
+}
 int main(int argc, char *argv[])
 {   
   int ch;
-  char **processes;
-  while ((ch = getopt(argc, argv, "lu::s::p::t::")) != -1) {
+  while ((ch = getopt(argc, argv, "clu::L::s::p::t::q::")) != -1) {
     switch (ch) {
       case 'l': 
         run_on_dir_members(handle_dir_member_list, EVERY_MEMBER);
       break;
-      case_index('p', handle_pause_member_list);
-      case_index('u', handle_unpause_member_list);
-      case_index('t', handle_toggle_pause_member_list);
-      case_index('s', handle_skip_member_list);
+
+      case 'c': 
+        run_on_dir_members(remove_potato_pid_file, EVERY_MEMBER);
+      break;
+
+      case_index('p', handle_pause);
+      case_index('u', handle_unpause);
+      case_index('t', handle_toggle_pause);
+      case_index('q', handle_quit);
+      case_index('s', handle_skip);
     }
   }
   return EXIT_SUCCESS;
