@@ -5,9 +5,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define POMODORO_MINUTES 0.1
-#define SHORT_PAUSE_MINUTES 0.05
-#define LONG_PAUSE_MINUTES 0.2
+#define POMODORO_MINUTES 25
+#define SHORT_PAUSE_MINUTES 5
+#define LONG_PAUSE_MINUTES 30
+
 #define SECONDS_IN_MINUTES 60
 
 
