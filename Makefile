@@ -7,11 +7,19 @@ install: all
 	cp build/potatod ${DESTDIR}${PREFIX}/bin
 	cp build/potatoctl ${DESTDIR}${PREFIX}/bin
 
-potatod: src/lib/*.c src/lib/signal.h src/potatod.c
-	$(CC) src/lib/*.c src/potatod.c -o build/potatod
+potatod: src/config.h src/lib/timer.c src/lib/utils.c src/lib/signal.h src/potatod.c
+	$(CC) src/lib/timer.c src/lib/utils.c src/potatod.c -o build/$@
 
-potatoctl: src/lib/signal.h src/potatoctl.c
-	$(CC) src/potatoctl.c -o build/potatoctl
+potatoctl: src/config.h src/lib/signal.h src/potatoctl.c
+	$(CC) src/potatoctl.c -o build/$@
 
+src/config.h: 
+	cp src/config.def.h $@
 
-# all: potato
+clean:
+	rm src/config.h
+	rm build/*
+
+uninstall:
+	rm ${DESTDIR}${PREFIX}/bin/potatod
+	rm ${DESTDIR}${PREFIX}/bin/potatoctl

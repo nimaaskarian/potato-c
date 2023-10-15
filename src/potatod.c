@@ -1,10 +1,14 @@
-#include "lib/timer.h"
-#include "lib/signal.h"
-
 #include <linux/limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include "lib/timer.h"
+#include "lib/signal.h"
+
+#include "config.h"
+#include "lib/utils.h"
+
 
 typedef struct {
   _Bool flush, notification;
@@ -13,26 +17,6 @@ typedef struct {
 Timer timer;
 App app;
 
-void skip_signal_handler(int signum)
-{
-  cycle_type(&timer);
-  set_timer_seconds(&timer);
-
-  if (app.notification)
-    send_notification_based_on_timertype(timer.type);
-}
-void pause_signal_handler(int signum)
-{
-  pause_timer(&timer);
-}
-void unpause_signal_handler(int signum)
-{
-  unpause_timer(&timer);
-}
-void toggle_pause_signal_handler(int signum)
-{
-  toggle_pause_timer(&timer);
-}
 
 void create_pid_file()
 {
@@ -64,44 +48,134 @@ void quit(int signum)
   exit(1);
 }
 
-void read_options_to_app(int argc, char*argv[], App * app)
+void read_options_to_app(int argc, char*argv[])
 {
   int ch;
   while ((ch = getopt(argc, argv, "fn")) != -1) {
     switch (ch) {
       case 'f':
-        app->flush = 1;
+        app.flush = 1;
         break;
       case 'n':
-        app->notification = 1;
+        app.notification = 1;
         break;
     }
   }
 }
 
-void start_app_loop(Timer* timer, App app)
+void print_before_time_based_on_timertype()
+{
+  switch (timer.type) {
+    case POMODORO_TYPE:
+      if (POMODORO_BEFORE_TIME_STRING != NULL)
+        printf("%s", POMODORO_BEFORE_TIME_STRING);
+    break;
+    case SHORT_PAUSE_TYPE:
+      if (SHORT_PAUSE_BEFORE_TIME_STRING != NULL)
+        printf("%s", SHORT_PAUSE_BEFORE_TIME_STRING);
+    break;
+    case LONG_PAUSE_TYPE:
+      if (LONG_PAUSE_BEFORE_TIME_STRING != NULL)
+        printf("%s", LONG_PAUSE_BEFORE_TIME_STRING);
+    break;
+  }
+}
+
+void start_app_loop()
 {
     while (1) {
-    if (!timer->seconds) {
-      if (timer->type == LONG_PAUSE_TYPE)
-        initialize_timer(timer);
+    if (!timer.seconds) {
+      if (timer.type == LONG_PAUSE_TYPE)
+        initialize_timer(&timer);
       else 
-        cycle_type(timer);
-      set_timer_seconds(timer);
+        cycle_type(&timer);
+      set_timer_seconds_based_on_type(&timer);
 
       if (app.notification)
-        send_notification_based_on_timertype(timer->type);
+        send_notification_based_on_timertype(timer.type);
     }
-    print_time_left_not_paused(timer);
+    if (!timer.paused) {
+      print_before_time_based_on_timertype();
+      print_time_left(&timer);
+    }
     if (app.flush) 
       fflush(stdout);
-    reduce_timer_second_not_paused(timer);
+    reduce_timer_second_not_paused(&timer);
 
     sleep(1);
   }
 }
 
-void assign_signals_to_functions()
+void skip_signal_handler(int signum)
+{
+  if (timer.type == LONG_PAUSE_TYPE)
+    initialize_timer(&timer);
+  else
+    cycle_type(&timer);
+
+  set_timer_seconds_based_on_type(&timer);
+
+  if (app.notification)
+    send_notification_based_on_timertype(timer.type);
+
+  if (timer.paused) {
+    print_before_time_based_on_timertype();
+    print_time_left(&timer);
+  }
+}
+
+void pause_signal_handler(int signum)
+{
+  pause_timer(&timer);
+  if (!app.notification)
+    return;
+  send_notification(PAUSED_NOTIF_TITLE, PAUSED_NOTIF_BODY);
+}
+
+void unpause_signal_handler(int signum)
+{
+  unpause_timer(&timer);
+  if (!app.notification)
+    return;
+  send_notification(UNPAUSED_NOTIF_TITLE, UNPAUSED_NOTIF_BODY);
+}
+
+void toggle_pause_signal_handler(int signum)
+{
+  toggle_pause_timer(&timer);
+  if (!app.notification)
+    return;
+  if (timer.paused)
+    send_notification(PAUSED_NOTIF_TITLE, PAUSED_NOTIF_BODY);
+  else 
+    send_notification(UNPAUSED_NOTIF_TITLE, UNPAUSED_NOTIF_BODY);
+}
+
+void increase_10sec_signal_handler()
+{
+  timer.seconds+=10;
+
+  if (timer.paused) {
+    print_before_time_based_on_timertype();
+    print_time_left(&timer);
+  }
+}
+
+void decrease_10sec_signal_handler()
+{
+  if (timer.seconds > 10)
+    timer.seconds-=10;
+  else 
+    timer.seconds = 0;
+
+  if (timer.paused) {
+    print_before_time_based_on_timertype();
+    print_time_left(&timer);
+  }
+
+}
+
+void assign_signals_to_handlers()
 {
   signal(SIGQUIT, quit);
   signal(SIGINT, quit);
@@ -110,30 +184,31 @@ void assign_signals_to_functions()
   signal(SIG_UNPAUSE, unpause_signal_handler);
   signal(SIG_TPAUSE, toggle_pause_signal_handler);
   signal(SIG_SKIP, skip_signal_handler);
+  signal(SIG_INC_10SEC, increase_10sec_signal_handler);
+  signal(SIG_DEC_10SEC, decrease_10sec_signal_handler);
 }
 
-void initialize_app(App * app)
+void initialize_app()
 {
-  app->flush = 0;
-  app->notification = 0;
+  app.flush = 0;
+  app.notification = 0;
 }
 
 int main(int argc, char *argv[])
 {
-  initialize_app(&app);
+  initialize_app();
+  initialize_timer(&timer);
+
+  read_options_to_app(argc, argv);
+  set_timer_seconds_based_on_type(&timer);
 
   create_pid_file();
-  assign_signals_to_functions();
-
-  initialize_timer(&timer);
-  set_timer_seconds(&timer);
-
-  read_options_to_app(argc, argv, &app);
+  assign_signals_to_handlers();
 
   if (app.notification)
     send_notification_based_on_timertype(timer.type);
 
-  start_app_loop(&timer, app);
+  start_app_loop();
 
   return EXIT_SUCCESS;
 }

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "../config.h"
 #include "timer.h"
 #include "utils.h"
 
@@ -10,15 +11,15 @@ void send_notification_based_on_timertype(TimerType type)
 {
   switch (type) {
     case POMODORO_TYPE:
-      send_notification("Pomodoro", "Time to focus!");
+      send_notification(POMODORO_NOTIF_TITLE, POMODORO_NOTIF_BODY);
       break;
 
     case SHORT_PAUSE_TYPE: 
-      send_notification("Short pause", "Have a little time for yourself.");
+      send_notification(SHORT_PAUSE_NOTIF_TITLE, SHORT_PAUSE_NOTIF_BODY);
       break;
 
     case LONG_PAUSE_TYPE: 
-      send_notification("Long pause", "Take a good long break.");
+      send_notification(LONG_PAUSE_NOTIF_TITLE, LONG_PAUSE_NOTIF_BODY);
       break;
   }
 }
@@ -59,7 +60,7 @@ float minutes_of_timer_type(TimerType type)
   }
 }
 
-void set_timer_seconds(Timer * timer)
+void set_timer_seconds_based_on_type(Timer * timer)
 {
   timer->seconds = minutes_of_timer_type(timer->type)*SECONDS_IN_MINUTES;
 }
@@ -86,11 +87,8 @@ void initialize_timer(Timer *timer)
   timer->type = POMODORO_TYPE;
 }
 
-void print_time_left_not_paused(Timer *timer)
+void print_time_left(Timer *timer)
 {
-  if (timer->paused) 
-    return;
-
   int minutes = timer->seconds/60;
   int seconds = timer->seconds%60;
 
