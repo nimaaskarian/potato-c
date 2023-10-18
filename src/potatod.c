@@ -1,4 +1,5 @@
 #include <linux/limits.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -9,9 +10,16 @@
 #include "config.h"
 #include "lib/utils.h"
 
+#ifndef INITIALIZE_APP
+  #define APP_NOTIFICATION 0
+  #define APP_PRINT_POMODORO_COUNT 0
+  #define APP_FLUSH 0
+  #define APP_NEW_LINE_AT_QUIT 0
+#endif
 
 typedef struct {
   _Bool flush, notification;
+  _Bool new_line_at_quit, print_pomodoro_count;
 } App;
 
 Timer timer;
@@ -43,6 +51,9 @@ void remove_pid_file()
 void quit(int signum)
 {
   remove_pid_file();
+  if (app.new_line_at_quit)
+    puts("");
+
   if (signum == SIGQUIT)
     exit(0);
   exit(1);
@@ -51,15 +62,42 @@ void quit(int signum)
 void read_options_to_app(int argc, char*argv[])
 {
   int ch;
-  while ((ch = getopt(argc, argv, "fn")) != -1) {
+  while ((ch = getopt(argc, argv, "fnpN")) != -1) {
     switch (ch) {
       case 'f':
-        app.flush = 1;
+        app.flush = !APP_FLUSH;
         break;
       case 'n':
-        app.notification = 1;
+        app.notification = !APP_NOTIFICATION;
+        break;
+      case 'p':
+        app.print_pomodoro_count = !APP_PRINT_POMODORO_COUNT;
+        break;
+      case 'N':
+        app.new_line_at_quit = !APP_NEW_LINE_AT_QUIT;
         break;
     }
+  }
+}
+
+
+void run_before_command_based_on_timertype(TimerType type)
+{
+  switch (type) {
+    case POMODORO_TYPE:
+      for (uint i = 0; i < LENGTH(POMODORO_BEFORE_COMMANDS); i++)
+        (void)system(POMODORO_BEFORE_COMMANDS[i]);
+      break;
+
+    case SHORT_BREAK_TYPE: 
+      for (uint i = 0; i < LENGTH(SHORT_BREAK_BEFORE_COMMANDS); i++)
+        (void)system(SHORT_BREAK_BEFORE_COMMANDS[i]);
+      break;
+
+    case LONG_BREAK_TYPE: 
+      for (uint i = 0; i < LENGTH(LONG_BREAK_BEFORE_COMMANDS); i++)
+        (void)system(LONG_BREAK_BEFORE_COMMANDS[i]);
+      break;
   }
 }
 
@@ -70,13 +108,13 @@ void print_before_time_based_on_timertype()
       if (POMODORO_BEFORE_TIME_STRING != NULL)
         printf("%s", POMODORO_BEFORE_TIME_STRING);
     break;
-    case SHORT_PAUSE_TYPE:
-      if (SHORT_PAUSE_BEFORE_TIME_STRING != NULL)
-        printf("%s", SHORT_PAUSE_BEFORE_TIME_STRING);
+    case SHORT_BREAK_TYPE:
+      if (SHORT_BREAK_BEFORE_TIME_STRING != NULL)
+        printf("%s", SHORT_BREAK_BEFORE_TIME_STRING);
     break;
-    case LONG_PAUSE_TYPE:
-      if (LONG_PAUSE_BEFORE_TIME_STRING != NULL)
-        printf("%s", LONG_PAUSE_BEFORE_TIME_STRING);
+    case LONG_BREAK_TYPE:
+      if (LONG_BREAK_BEFORE_TIME_STRING != NULL)
+        printf("%s", LONG_BREAK_BEFORE_TIME_STRING);
     break;
   }
 }
@@ -85,10 +123,8 @@ void start_app_loop()
 {
     while (1) {
     if (!timer.seconds) {
-      if (timer.type == LONG_PAUSE_TYPE)
-        initialize_timer(&timer);
-      else 
-        cycle_type(&timer);
+      cycle_type(&timer);
+      run_before_command_based_on_timertype(timer.type);
       set_timer_seconds_based_on_type(&timer);
 
       if (app.notification)
@@ -97,6 +133,10 @@ void start_app_loop()
     if (!timer.paused) {
       print_before_time_based_on_timertype();
       print_time_left(&timer);
+
+      if (app.print_pomodoro_count) 
+        printf("%s%d",BEFORE_POMODORO_COUNT_STRING ,timer.pomodoro_count);
+      puts("");
     }
     if (app.flush) 
       fflush(stdout);
@@ -108,10 +148,8 @@ void start_app_loop()
 
 void skip_signal_handler(int signum)
 {
-  if (timer.type == LONG_PAUSE_TYPE)
-    initialize_timer(&timer);
-  else
-    cycle_type(&timer);
+  cycle_type(&timer);
+  run_before_command_based_on_timertype(timer.type);
 
   set_timer_seconds_based_on_type(&timer);
 
@@ -175,6 +213,17 @@ void decrease_10sec_signal_handler()
 
 }
 
+void increase_timer_pomodoro_count()
+{
+  timer.pomodoro_count ++;
+}
+
+void decrease_timer_pomodoro_count()
+{
+  if (timer.pomodoro_count > 0)
+    timer.pomodoro_count --;
+}
+
 void assign_signals_to_handlers()
 {
   signal(SIGQUIT, quit);
@@ -186,12 +235,18 @@ void assign_signals_to_handlers()
   signal(SIG_SKIP, skip_signal_handler);
   signal(SIG_INC_10SEC, increase_10sec_signal_handler);
   signal(SIG_DEC_10SEC, decrease_10sec_signal_handler);
+  signal(SIG_INC_POMODORO_COUNT, increase_timer_pomodoro_count);
+  signal(SIG_DEC_POMODORO_COUNT, decrease_timer_pomodoro_count);
 }
 
 void initialize_app()
 {
-  app.flush = 0;
-  app.notification = 0;
+  #ifdef INITIALIZE_APP
+    app.flush = APP_FLUSH;
+    app.notification = APP_NOTIFICATION;
+    app.print_pomodoro_count = APP_PRINT_POMODORO_COUNT;
+    app.new_line_at_quit = APP_NEW_LINE_AT_QUIT;
+  #endif
 }
 
 int main(int argc, char *argv[])
@@ -201,6 +256,7 @@ int main(int argc, char *argv[])
 
   read_options_to_app(argc, argv);
   set_timer_seconds_based_on_type(&timer);
+  run_before_command_based_on_timertype(timer.type);
 
   create_pid_file();
   assign_signals_to_handlers();

@@ -10,8 +10,8 @@
 
 typedef enum { 
   POMODORO_TYPE = 0,
-  SHORT_PAUSE_TYPE,
-  LONG_PAUSE_TYPE,
+  SHORT_BREAK_TYPE,
+  LONG_BREAK_TYPE,
 } TimerType;
 
 typedef struct {

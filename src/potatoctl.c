@@ -56,6 +56,8 @@ handle_kill(skip, SIG_SKIP);
 handle_kill(toggle_pause, SIG_TPAUSE);
 handle_kill(increase_10sec, SIG_INC_10SEC);
 handle_kill(decrease_10sec, SIG_DEC_10SEC);
+handle_kill(increase_pomodoro_count, SIG_DEC_POMODORO_COUNT);
+handle_kill(decrease_pomodoro_count, SIG_DEC_POMODORO_COUNT);
 
 void remove_potato_pid_file(char *name, int index)
 {
@@ -67,7 +69,7 @@ void remove_potato_pid_file(char *name, int index)
 int main(int argc, char *argv[])
 {   
   int ch;
-  while ((ch = getopt(argc, argv, "clu::L::s::p::t::q::d::i::")) != -1) {
+  while ((ch = getopt(argc, argv, "clu::L::s::p::t::q::d::i::I::D::")) != -1) {
     switch (ch) {
       case 'l': 
         run_on_dir_members(handle_dir_member_list, EVERY_MEMBER);
@@ -84,6 +86,8 @@ int main(int argc, char *argv[])
       case_index('s', handle_skip);
       case_index('i', handle_increase_10sec);
       case_index('d', handle_decrease_10sec);
+      case_index('I', handle_decrease_pomodoro_count);
+      case_index('D', handle_increase_pomodoro_count);
     }
   }
   return EXIT_SUCCESS;
