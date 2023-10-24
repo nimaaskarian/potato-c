@@ -118,6 +118,17 @@ void print_before_time_based_on_timertype()
     break;
   }
 }
+void print_all()
+{
+  print_before_time_based_on_timertype();
+  print_time_left(&timer);
+
+  if (app.print_pomodoro_count) 
+    printf("%s%d",BEFORE_POMODORO_COUNT_STRING ,timer.pomodoro_count);
+  puts("");
+  if (app.flush) 
+    fflush(stdout);
+}
 
 void start_app_loop()
 {
@@ -131,15 +142,8 @@ void start_app_loop()
         send_notification_based_on_timertype(timer.type);
     }
     if (!timer.paused) {
-      print_before_time_based_on_timertype();
-      print_time_left(&timer);
-
-      if (app.print_pomodoro_count) 
-        printf("%s%d",BEFORE_POMODORO_COUNT_STRING ,timer.pomodoro_count);
-      puts("");
+      print_all();
     }
-    if (app.flush) 
-      fflush(stdout);
     reduce_timer_second_not_paused(&timer);
 
     sleep(1);
@@ -157,10 +161,33 @@ void skip_signal_handler(int signum)
     send_notification_based_on_timertype(timer.type);
 
   if (timer.paused) {
-    print_before_time_based_on_timertype();
-    print_time_left(&timer);
+    print_all();
   }
 }
+
+void initialize_app()
+{
+  #ifdef INITIALIZE_APP
+    app.flush = APP_FLUSH;
+    app.notification = APP_NOTIFICATION;
+    app.print_pomodoro_count = APP_PRINT_POMODORO_COUNT;
+    app.new_line_at_quit = APP_NEW_LINE_AT_QUIT;
+  #endif
+}
+
+void reset_signal_handler(int signum)
+{
+  initialize_app();
+  initialize_timer(&timer);
+
+  set_timer_seconds_based_on_type(&timer);
+  run_before_command_based_on_timertype(timer.type);
+
+  if (timer.paused) {
+    print_all();
+  }
+}
+
 
 void pause_signal_handler(int signum)
 {
@@ -193,10 +220,9 @@ void increase_10sec_signal_handler()
 {
   timer.seconds+=10;
 
-  if (timer.paused) {
-    print_before_time_based_on_timertype();
-    print_time_left(&timer);
-  }
+  if (timer.paused) 
+    print_all();
+
 }
 
 void decrease_10sec_signal_handler()
@@ -206,22 +232,25 @@ void decrease_10sec_signal_handler()
   else 
     timer.seconds = 0;
 
-  if (timer.paused) {
-    print_before_time_based_on_timertype();
-    print_time_left(&timer);
-  }
-
+  if (timer.paused)
+    print_all();
 }
 
-void increase_timer_pomodoro_count()
+void increase_pomodoro_count_signal_handler()
 {
   timer.pomodoro_count ++;
+
+  if (timer.paused)
+    print_all();
 }
 
-void decrease_timer_pomodoro_count()
+void decrease_pomodoro_count_signal_handler()
 {
   if (timer.pomodoro_count > 0)
     timer.pomodoro_count --;
+
+  if (timer.paused)
+    print_all();
 }
 
 void assign_signals_to_handlers()
@@ -235,18 +264,9 @@ void assign_signals_to_handlers()
   signal(SIG_SKIP, skip_signal_handler);
   signal(SIG_INC_10SEC, increase_10sec_signal_handler);
   signal(SIG_DEC_10SEC, decrease_10sec_signal_handler);
-  signal(SIG_INC_POMODORO_COUNT, increase_timer_pomodoro_count);
-  signal(SIG_DEC_POMODORO_COUNT, decrease_timer_pomodoro_count);
-}
-
-void initialize_app()
-{
-  #ifdef INITIALIZE_APP
-    app.flush = APP_FLUSH;
-    app.notification = APP_NOTIFICATION;
-    app.print_pomodoro_count = APP_PRINT_POMODORO_COUNT;
-    app.new_line_at_quit = APP_NEW_LINE_AT_QUIT;
-  #endif
+  signal(SIG_INC_POMODORO_COUNT, increase_pomodoro_count_signal_handler);
+  signal(SIG_DEC_POMODORO_COUNT, decrease_pomodoro_count_signal_handler);
+  signal(SIG_RESET, reset_signal_handler);
 }
 
 int main(int argc, char *argv[])
