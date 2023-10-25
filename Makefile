@@ -15,15 +15,26 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-all: bin/potatod bin/potatoctl
+all: options bin/potatod bin/potatoctl
 
-install: all
+install: all install_options
 	mkdir -p ${DESTDIR}${PREFIX}/bin
 	cp potatod ${DESTDIR}${PREFIX}/bin
 	cp potatoctl ${DESTDIR}${PREFIX}/bin
 
 
 ${OBJ_CTL} ${OBJ_D}: include/signal.h config.h config.mk
+
+install_options:
+	@echo potato install options:
+	@echo "DESTDIR  = ${DESTDIR}"
+	@echo "PREFIX   = ${PREFIX}"
+
+options:
+	@echo potato build options:
+	@echo "CFLAGS   = ${CFLAGS}"
+	@echo "LDFLAGS  = ${LDFLAGS}"
+	@echo "CC       = ${CC}"
 
 bin/potatod: ${OBJ_D}
 	mkdir -p $(BIN_DIR)
@@ -37,8 +48,8 @@ config.h:
 	cp config.def.h $@
 
 clean:
-	rm src/config.h
-	rm build/*
+	rm config.h
+	rm bin obj -rf
 
 uninstall:
 	rm ${DESTDIR}${PREFIX}/bin/potatod
