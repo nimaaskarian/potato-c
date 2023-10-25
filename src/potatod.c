@@ -4,11 +4,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "lib/timer.h"
-#include "lib/signal.h"
+#include "../include/timer.h"
+#include "../include/signal.h"
 
-#include "config.h"
-#include "lib/utils.h"
+#include "../config.h"
+#include "../include/utils.h"
 
 #ifndef INITIALIZE_APP
   #define APP_NOTIFICATION 0
@@ -85,18 +85,18 @@ void run_before_command_based_on_timertype(TimerType type)
 {
   switch (type) {
     case POMODORO_TYPE:
-      for (uint i = 0; i < LENGTH(POMODORO_BEFORE_COMMANDS); i++)
-        (void)system(POMODORO_BEFORE_COMMANDS[i]);
+      for (unsigned int i = 0; i < LENGTH(ON_POMODORO_START_COMMANDS); i++)
+        (void)system(ON_POMODORO_START_COMMANDS[i]);
       break;
 
     case SHORT_BREAK_TYPE: 
-      for (uint i = 0; i < LENGTH(SHORT_BREAK_BEFORE_COMMANDS); i++)
-        (void)system(SHORT_BREAK_BEFORE_COMMANDS[i]);
+      for (unsigned int i = 0; i < LENGTH(ON_SHORT_BREAK_START_COMMANDS); i++)
+        (void)system(ON_SHORT_BREAK_START_COMMANDS[i]);
       break;
 
     case LONG_BREAK_TYPE: 
-      for (uint i = 0; i < LENGTH(LONG_BREAK_BEFORE_COMMANDS); i++)
-        (void)system(LONG_BREAK_BEFORE_COMMANDS[i]);
+      for (unsigned int i = 0; i < LENGTH(ON_LONG_BREAK_START_COMMANDS); i++)
+        (void)system(ON_LONG_BREAK_START_COMMANDS[i]);
       break;
   }
 }
@@ -135,7 +135,8 @@ void start_app_loop()
     while (1) {
     if (!timer.seconds) {
       cycle_type(&timer);
-      run_before_command_based_on_timertype(timer.type);
+      if (!timer.paused)
+        run_before_command_based_on_timertype(timer.type);
       set_timer_seconds_based_on_type(&timer);
 
       if (app.notification)

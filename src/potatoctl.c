@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#include "lib/signal.h"
+#include "../include/signal.h"
 
 #define EVERY_MEMBER -1
 void run_on_dir_members(void(* handler)(char *, int index), int selected_index)

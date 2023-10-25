@@ -1,2 +1,5 @@
 build/
 src/config.h
+bin/
+obj/
+config.h

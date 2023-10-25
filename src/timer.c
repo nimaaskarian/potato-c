@@ -4,8 +4,8 @@
 #include <unistd.h>
 
 #include "../config.h"
-#include "timer.h"
-#include "utils.h"
+#include "../include/timer.h"
+#include "../include/utils.h"
 
 void send_notification_based_on_timertype(TimerType type)
 {
@@ -27,16 +27,23 @@ void send_notification_based_on_timertype(TimerType type)
 void pause_timer(Timer * timer)
 {
   timer->paused = 1;
+  for (unsigned int i = 0; i < LENGTH(ON_PAUSE_COMMANDS); i++)
+    (void)system(ON_PAUSE_COMMANDS[i]);
 }
 
 void unpause_timer(Timer * timer)
 {
   timer->paused = 0;
+  for (unsigned int i = 0; i < LENGTH(ON_UNPAUSE_COMMANDS); i++)
+    (void)system(ON_UNPAUSE_COMMANDS[i]);
 }
 
 void toggle_pause_timer(Timer * timer)
 {
-  timer->paused = !timer->paused;
+  if (timer->paused)
+    unpause_timer(timer);
+  else
+    pause_timer(timer);
 }
 
 void reduce_timer_second_not_paused(Timer * timer)

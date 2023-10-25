@@ -16,9 +16,9 @@ typedef enum {
 
 typedef struct {
   _Bool paused;
-  uint seconds;
+  unsigned int seconds;
   TimerType type;
-  uint pomodoro_count;
+  unsigned int pomodoro_count;
 } Timer;
 
 void initialize_timer(Timer *timer);

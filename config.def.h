@@ -26,11 +26,15 @@
 #define POMODORO_COUNT 4
 
 #define DISOWN_NULL " &> /dev/null & disown"
-static const char* POMODORO_BEFORE_COMMANDS[] = {
+static const char* ON_POMODORO_START_COMMANDS[] = {
 };
-static const char* SHORT_BREAK_BEFORE_COMMANDS[] = {
+static const char* ON_SHORT_BREAK_START_COMMANDS[] = {
 };
-static const char* LONG_BREAK_BEFORE_COMMANDS[] = {
+static const char* ON_LONG_BREAK_START_COMMANDS[] = {
+};
+static const char* ON_PAUSE_COMMANDS[] = {
+};
+static const char* ON_UNPAUSE_COMMANDS[] = {
 };
 
 #define POMODORO_MINUTES 25
