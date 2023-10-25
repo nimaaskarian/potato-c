@@ -19,8 +19,8 @@ all: options bin/potatod bin/potatoctl
 
 install: all install_options
 	mkdir -p ${DESTDIR}${PREFIX}/bin
-	cp potatod ${DESTDIR}${PREFIX}/bin
-	cp potatoctl ${DESTDIR}${PREFIX}/bin
+	cp bin/potatod ${DESTDIR}${PREFIX}/bin
+	cp bin/potatoctl ${DESTDIR}${PREFIX}/bin
 
 
 ${OBJ_CTL} ${OBJ_D}: include/signal.h config.h config.mk
