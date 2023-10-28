@@ -5,78 +5,59 @@
 
 #include "../config.h"
 #include "../include/timer.h"
-#include "../include/utils.h"
 
-void send_notification_based_on_timertype(TimerType type)
-{
-  switch (type) {
-    case POMODORO_TYPE:
-      send_notification(POMODORO_NOTIF_TITLE, POMODORO_NOTIF_BODY);
-      break;
-
-    case SHORT_BREAK_TYPE: 
-      send_notification(SHORT_BREAK_NOTIF_TITLE, SHORT_BREAK_NOTIF_BODY);
-      break;
-
-    case LONG_BREAK_TYPE: 
-      send_notification(LONG_BREAK_NOTIF_TITLE, LONG_BREAK_NOTIF_BODY);
-      break;
-  }
-}
-
-void pause_timer(Timer * timer)
+void Timer_pause(Timer * timer)
 {
   timer->paused = 1;
-  for (unsigned int i = 0; i < LENGTH(ON_PAUSE_COMMANDS); i++)
-    (void)system(ON_PAUSE_COMMANDS[i]);
 }
 
-void unpause_timer(Timer * timer)
+void Timer_unpause(Timer * timer)
 {
   timer->paused = 0;
-  for (unsigned int i = 0; i < LENGTH(ON_UNPAUSE_COMMANDS); i++)
-    (void)system(ON_UNPAUSE_COMMANDS[i]);
 }
 
-void toggle_pause_timer(Timer * timer)
+void Timer_toggle_pause(Timer * timer)
 {
   if (timer->paused)
-    unpause_timer(timer);
+    Timer_unpause(timer);
   else
-    pause_timer(timer);
+    Timer_pause(timer);
 }
 
-void reduce_timer_second_not_paused(Timer * timer)
+// This method has been designed in a way to just be 
+// put inside a loop and just work for you as your timer.
+// You can use `Timer_print_time_left` function afterwards
+void Timer_reduce_second_sleep(Timer * timer)
 {
-  if(timer->paused != 1)
-    timer->seconds = timer->seconds - 1;
+  if (!timer->paused) {
+    timer->seconds--;
+  }
+  if (!timer->seconds) {
+    Timer_cycle_type(timer);
+    Timer_set_seconds_based_on_type(timer);
+  }
+  sleep(1);
 }
 
-float minutes_of_timer_type(TimerType type)
+void Timer_set_seconds_based_on_type(Timer * timer)
 {
-  switch (type) {
+  float minutes;
+  switch (timer->type) {
     case POMODORO_TYPE:
-      return POMODORO_MINUTES;
+      minutes = POMODORO_MINUTES;
     break;
     case SHORT_BREAK_TYPE:
-      return SHORT_BREAK_MINUTES;
+      minutes = SHORT_BREAK_MINUTES;
     break;
     case LONG_BREAK_TYPE:
-      return LONG_BREAK_MINUTES;
+      minutes = LONG_BREAK_MINUTES;
     break;
   }
+  timer->seconds = minutes*SECONDS_IN_MINUTES;
 }
 
-void set_timer_seconds_based_on_type(Timer * timer)
+void Timer_cycle_type(Timer * timer)
 {
-  timer->seconds = minutes_of_timer_type(timer->type)*SECONDS_IN_MINUTES;
-}
-
-void cycle_type(Timer * timer)
-{
-  if (timer->type == LONG_BREAK_TYPE)
-    return initialize_timer(timer);
-
   switch (timer->type) {
     case POMODORO_TYPE:
       timer->type = SHORT_BREAK_TYPE;
@@ -85,23 +66,35 @@ void cycle_type(Timer * timer)
     case SHORT_BREAK_TYPE:
       timer->type = POMODORO_TYPE;
     break;
+    case LONG_BREAK_TYPE:
+      return Timer_initialize(timer);
   }
   if (timer->pomodoro_count == 0)
     timer->type = LONG_BREAK_TYPE;
 }
 
-void initialize_timer(Timer *timer)
+void Timer_initialize(Timer *timer)
 {
   timer->paused = 0;
   timer->pomodoro_count = POMODORO_COUNT;
   timer->type = POMODORO_TYPE;
 }
 
-void print_time_left(Timer *timer)
+// This method DOES NOT flush the output afterwards.
+// Do the flushing yourself
+void Timer_print_time_left(Timer *timer)
 {
-  int minutes = timer->seconds/60;
-  int seconds = timer->seconds%60;
+  int seconds = timer->seconds;
+  int hours = seconds/(SECONDS_IN_HOUR);
+  seconds-= hours*SECONDS_IN_HOUR;
+  
+  int minutes = seconds/SECONDS_IN_MINUTES;
+  seconds = seconds%SECONDS_IN_MINUTES;
 
-  printf("%02d:%02d", minutes,seconds);
+  if (hours) {
+    printf("%02d:%02d:%02d", hours, minutes, seconds);
+  } else {
+    printf("%02d:%02d", minutes, seconds);
+  }
 }
 

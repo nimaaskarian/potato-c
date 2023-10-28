@@ -6,7 +6,8 @@
 #include <unistd.h>
 
 #define SECONDS_IN_MINUTES 60
-
+#define MINUTES_IN_HOUR    60
+#define SECONDS_IN_HOUR    SECONDS_IN_MINUTES*MINUTES_IN_HOUR
 
 typedef enum { 
   POMODORO_TYPE = 0,
@@ -22,15 +23,13 @@ typedef struct {
 } Timer;
 
 void initialize_timer(Timer *timer);
-void reduce_timer_second_not_paused(Timer * timer);
-float minutes_of_timer_type(TimerType type);
-void set_timer_seconds_based_on_type(Timer * timer);
-void cycle_type(Timer * timer);
-void initialize_timer(Timer *timer);
-void print_time_left(Timer *timer);
-void pause_timer(Timer * timer);
-void unpause_timer(Timer * timer);
-void toggle_pause_timer(Timer * timer);
-void send_notification_based_on_timertype(TimerType type);
+void Timer_reduce_second_sleep(Timer * timer);
+void Timer_set_seconds_based_on_type(Timer * timer);
+void Timer_cycle_type(Timer * timer);
+void Timer_initialize(Timer *timer);
+void Timer_print_time_left(Timer *timer);
+void Timer_pause(Timer * timer);
+void Timer_unpause(Timer * timer);
+void Timer_toggle_pause(Timer * timer);
 #endif
 

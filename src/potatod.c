@@ -121,7 +121,7 @@ void print_before_time_based_on_timertype()
 void print_all()
 {
   print_before_time_based_on_timertype();
-  print_time_left(&timer);
+  Timer_print_time_left(&timer);
 
   if (app.print_pomodoro_count) 
     printf("%s%d",BEFORE_POMODORO_COUNT_STRING ,timer.pomodoro_count);
@@ -130,14 +130,30 @@ void print_all()
     fflush(stdout);
 }
 
+void send_notification_based_on_timertype(TimerType type)
+{
+  switch (type) {
+    case POMODORO_TYPE:
+      send_notification(POMODORO_NOTIF_TITLE, POMODORO_NOTIF_BODY);
+      break;
+
+    case SHORT_BREAK_TYPE: 
+      send_notification(SHORT_BREAK_NOTIF_TITLE, SHORT_BREAK_NOTIF_BODY);
+      break;
+
+    case LONG_BREAK_TYPE: 
+      send_notification(LONG_BREAK_NOTIF_TITLE, LONG_BREAK_NOTIF_BODY);
+      break;
+  }
+}
+
+
 void start_app_loop()
 {
-    while (1) {
+  while (1) {
     if (!timer.seconds) {
-      cycle_type(&timer);
       if (!timer.paused)
         run_before_command_based_on_timertype(timer.type);
-      set_timer_seconds_based_on_type(&timer);
 
       if (app.notification)
         send_notification_based_on_timertype(timer.type);
@@ -145,18 +161,30 @@ void start_app_loop()
     if (!timer.paused) {
       print_all();
     }
-    reduce_timer_second_not_paused(&timer);
-
-    sleep(1);
+    Timer_reduce_second_sleep(&timer);
   }
+}
+
+void pause_timer_run_cmds() 
+{
+  Timer_pause(&timer);
+  for (unsigned int i = 0; i < LENGTH(ON_PAUSE_COMMANDS); i++)
+    (void)system(ON_PAUSE_COMMANDS[i]);
+}
+
+void unpause_timer_run_cmds()
+{
+  Timer_unpause(&timer);
+  for (unsigned int i = 0; i < LENGTH(ON_UNPAUSE_COMMANDS); i++)
+    (void)system(ON_UNPAUSE_COMMANDS[i]);
 }
 
 void skip_signal_handler(int signum)
 {
-  cycle_type(&timer);
+  Timer_cycle_type(&timer);
   run_before_command_based_on_timertype(timer.type);
 
-  set_timer_seconds_based_on_type(&timer);
+  Timer_set_seconds_based_on_type(&timer);
 
   if (app.notification)
     send_notification_based_on_timertype(timer.type);
@@ -176,12 +204,12 @@ void initialize_app()
   #endif
 }
 
-void reset_signal_handler(int signum)
+void reset_signal_handler()
 {
   initialize_app();
-  initialize_timer(&timer);
+  Timer_initialize(&timer);
 
-  set_timer_seconds_based_on_type(&timer);
+  Timer_set_seconds_based_on_type(&timer);
   run_before_command_based_on_timertype(timer.type);
 
   if (timer.paused) {
@@ -190,25 +218,29 @@ void reset_signal_handler(int signum)
 }
 
 
-void pause_signal_handler(int signum)
+void pause_signal_handler()
 {
-  pause_timer(&timer);
+  pause_timer_run_cmds();
   if (!app.notification)
     return;
   send_notification(PAUSED_NOTIF_TITLE, PAUSED_NOTIF_BODY);
 }
 
-void unpause_signal_handler(int signum)
+void unpause_signal_handler()
 {
-  unpause_timer(&timer);
+  unpause_timer_run_cmds();
   if (!app.notification)
     return;
   send_notification(UNPAUSED_NOTIF_TITLE, UNPAUSED_NOTIF_BODY);
 }
 
-void toggle_pause_signal_handler(int signum)
+void toggle_pause_signal_handler()
 {
-  toggle_pause_timer(&timer);
+  if (timer.paused)
+    pause_timer_run_cmds();
+  else
+    unpause_timer_run_cmds();
+
   if (!app.notification)
     return;
   if (timer.paused)
@@ -273,10 +305,10 @@ void assign_signals_to_handlers()
 int main(int argc, char *argv[])
 {
   initialize_app();
-  initialize_timer(&timer);
+  Timer_initialize(&timer);
 
   read_options_to_app(argc, argv);
-  set_timer_seconds_based_on_type(&timer);
+  Timer_set_seconds_based_on_type(&timer);
   run_before_command_based_on_timertype(timer.type);
 
   create_pid_file();
