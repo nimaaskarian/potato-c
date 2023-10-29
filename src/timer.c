@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -80,21 +81,49 @@ void Timer_initialize(Timer *timer)
   timer->type = POMODORO_TYPE;
 }
 
-// This method DOES NOT flush the output afterwards.
-// Do the flushing yourself
-void Timer_print_time_left(Timer *timer)
+static void divide_seconds_minutes_hours(unsigned int * seconds, unsigned int * minutes, unsigned int * hours)
 {
-  int seconds = timer->seconds;
-  int hours = seconds/(SECONDS_IN_HOUR);
-  seconds-= hours*SECONDS_IN_HOUR;
+  *hours = (*seconds)/(SECONDS_IN_HOUR);
+  *seconds-= (*hours)*SECONDS_IN_HOUR;
   
-  int minutes = seconds/SECONDS_IN_MINUTES;
-  seconds = seconds%SECONDS_IN_MINUTES;
+  *minutes = (*seconds)/SECONDS_IN_MINUTES;
+  *seconds = (*seconds)%SECONDS_IN_MINUTES;
+}
+
+// Maybe I'll use this some day
+char * Timer_time_left(Timer *timer)
+{
+  unsigned int seconds = timer->seconds, hours, minutes;
+  divide_seconds_minutes_hours(&seconds, &minutes, &hours);
+
+  // MIN:SEC
+  //  00:00\0
+  size_t size = 6;
+  if (hours) {
+    size_t size_of_hours = floor(log10(hours));
+    size+=size_of_hours+1;
+  }
+  char * output = malloc(sizeof(char) * size);
+  if (hours) {
+    snprintf(output, size, "%02u:%02u:%02u", hours, minutes, seconds);
+  } else {
+    snprintf(output, size, "%02u:%02u", minutes, seconds);
+  }
+
+  return output;
+}
+
+// This method DOES NOT flush the output afterwards.
+// Do the flushing yourself (if you need to)
+void Timer_print(Timer *timer)
+{
+  unsigned int seconds = timer->seconds, hours, minutes;
+  divide_seconds_minutes_hours(&seconds, &minutes, &hours);
 
   if (hours) {
-    printf("%02d:%02d:%02d", hours, minutes, seconds);
+    printf("%02u:%02u:%02u", hours, minutes, seconds);
   } else {
-    printf("%02d:%02d", minutes, seconds);
+    printf("%02u:%02u", minutes, seconds);
   }
 }
 

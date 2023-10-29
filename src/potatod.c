@@ -121,7 +121,7 @@ void print_before_time_based_on_timertype()
 void print_all()
 {
   print_before_time_based_on_timertype();
-  Timer_print_time_left(&timer);
+  Timer_print(&timer);
 
   if (app.print_pomodoro_count) 
     printf("%s%d",BEFORE_POMODORO_COUNT_STRING ,timer.pomodoro_count);
@@ -182,9 +182,9 @@ void unpause_timer_run_cmds()
 void skip_signal_handler(int signum)
 {
   Timer_cycle_type(&timer);
-  run_before_command_based_on_timertype(timer.type);
-
   Timer_set_seconds_based_on_type(&timer);
+
+  run_before_command_based_on_timertype(timer.type);
 
   if (app.notification)
     send_notification_based_on_timertype(timer.type);
@@ -207,14 +207,13 @@ void initialize_app()
 void reset_signal_handler()
 {
   initialize_app();
-  Timer_initialize(&timer);
 
+  Timer_initialize(&timer);
   Timer_set_seconds_based_on_type(&timer);
+
   run_before_command_based_on_timertype(timer.type);
 
-  if (timer.paused) {
-    print_all();
-  }
+  print_all();
 }
 
 
@@ -237,9 +236,9 @@ void unpause_signal_handler()
 void toggle_pause_signal_handler()
 {
   if (timer.paused)
-    pause_timer_run_cmds();
-  else
     unpause_timer_run_cmds();
+  else
+    pause_timer_run_cmds();
 
   if (!app.notification)
     return;
@@ -305,10 +304,11 @@ void assign_signals_to_handlers()
 int main(int argc, char *argv[])
 {
   initialize_app();
-  Timer_initialize(&timer);
-
   read_options_to_app(argc, argv);
+
+  Timer_initialize(&timer);
   Timer_set_seconds_based_on_type(&timer);
+
   run_before_command_based_on_timertype(timer.type);
 
   create_pid_file();

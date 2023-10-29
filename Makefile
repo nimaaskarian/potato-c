@@ -38,11 +38,11 @@ options:
 
 bin/potatod: ${OBJ_D}
 	mkdir -p $(BIN_DIR)
-	${CC} ${CFLAGS} -o $@ ${OBJ_D}
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJ_D}
 
 bin/potatoctl: ${OBJ_CTL}
 	mkdir -p $(BIN_DIR)
-	${CC} ${CFLAGS} -o $@ ${OBJ_CTL}
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJ_CTL}
 
 config.h: 
 	cp config.def.h $@
