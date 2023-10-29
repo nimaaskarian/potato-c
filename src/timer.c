@@ -7,17 +7,17 @@
 #include "../config.h"
 #include "../include/timer.h"
 
-void Timer_pause(Timer * timer)
+void Timer_pause(Timer *restrict timer)
 {
   timer->paused = 1;
 }
 
-void Timer_unpause(Timer * timer)
+void Timer_unpause(Timer *restrict timer)
 {
   timer->paused = 0;
 }
 
-void Timer_toggle_pause(Timer * timer)
+void Timer_toggle_pause(Timer *restrict timer)
 {
   if (timer->paused)
     Timer_unpause(timer);
@@ -28,7 +28,7 @@ void Timer_toggle_pause(Timer * timer)
 // This method has been designed in a way to just be 
 // put inside a loop and just work for you as your timer.
 // You can use `Timer_print_time_left` function afterwards
-void Timer_reduce_second_sleep(Timer * timer)
+void Timer_reduce_second_sleep(Timer *restrict timer)
 {
   if (!timer->paused) {
     timer->seconds--;
@@ -40,7 +40,7 @@ void Timer_reduce_second_sleep(Timer * timer)
   sleep(1);
 }
 
-void Timer_set_seconds_based_on_type(Timer * timer)
+void Timer_set_seconds_based_on_type(Timer *restrict timer)
 {
   float minutes;
   switch (timer->type) {
@@ -57,7 +57,7 @@ void Timer_set_seconds_based_on_type(Timer * timer)
   timer->seconds = minutes*SECONDS_IN_MINUTES;
 }
 
-void Timer_cycle_type(Timer * timer)
+void Timer_cycle_type(Timer *restrict timer)
 {
   switch (timer->type) {
     case POMODORO_TYPE:
@@ -74,7 +74,7 @@ void Timer_cycle_type(Timer * timer)
     timer->type = LONG_BREAK_TYPE;
 }
 
-void Timer_initialize(Timer *timer)
+void Timer_initialize(Timer *restrict timer)
 {
   timer->paused = 0;
   timer->pomodoro_count = POMODORO_COUNT;
@@ -91,7 +91,7 @@ static void divide_seconds_minutes_hours(unsigned int * seconds, unsigned int * 
 }
 
 // Maybe I'll use this some day
-char * Timer_time_left(Timer *timer)
+char * Timer_time_left(Timer *restrict timer)
 {
   unsigned int seconds = timer->seconds, hours, minutes;
   divide_seconds_minutes_hours(&seconds, &minutes, &hours);
@@ -115,7 +115,7 @@ char * Timer_time_left(Timer *timer)
 
 // This method DOES NOT flush the output afterwards.
 // Do the flushing yourself (if you need to)
-void Timer_print(Timer *timer)
+void Timer_print(Timer *restrict timer)
 {
   unsigned int seconds = timer->seconds, hours, minutes;
   divide_seconds_minutes_hours(&seconds, &minutes, &hours);
