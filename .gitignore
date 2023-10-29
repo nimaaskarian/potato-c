@@ -3,3 +3,5 @@ src/config.h
 bin/
 obj/
 config.h
+debug/
+gmon.out

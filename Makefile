@@ -4,6 +4,7 @@ include config.mk
 SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
+DEB_DIR = debug
 
 SRC_CTL = src/potatoctl.c
 OBJ_CTL = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_CTL))
@@ -36,13 +37,22 @@ options:
 	@echo "LDFLAGS  = ${LDFLAGS}"
 	@echo "CC       = ${CC}"
 
-bin/potatod: ${OBJ_D}
+${BIN_DIR}/potatod: ${OBJ_D}
 	mkdir -p $(BIN_DIR)
 	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJ_D}
 
-bin/potatoctl: ${OBJ_CTL}
+${BIN_DIR}/potatoctl: ${OBJ_CTL}
 	mkdir -p $(BIN_DIR)
 	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJ_CTL}
+
+debug: ${DEB_DIR}/potatod ${DEB_DIR}/potatoctl
+${DEB_DIR}/potatod: ${OBJ_D}
+	mkdir -p $(DEB_DIR)
+	${CC} ${CFLAGS} ${LDFLAGS} -pg -o $@ ${OBJ_D}
+
+${DEB_DIR}/potatoctl: ${OBJ_CTL}
+	mkdir -p $(DEB_DIR)
+	${CC} ${CFLAGS} ${LDFLAGS} -pg -o $@ ${OBJ_CTL}
 
 config.h: 
 	cp config.def.h $@
