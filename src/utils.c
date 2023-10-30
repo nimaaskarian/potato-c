@@ -24,3 +24,13 @@ void send_notification(char *title, char *description)
   (void)system((char*) command);
 }
 
+size_t int_length(int number)
+{
+  size_t output = 1;
+  while (number > 1) {
+    number/=10;
+    output++;
+  }
+
+  return output;
+}

@@ -6,6 +6,7 @@
 
 #include "../config.h"
 #include "../include/timer.h"
+#include "../include/utils.h"
 
 void Timer_pause(Timer *restrict timer)
 {
@@ -100,7 +101,7 @@ char * Timer_time_left(Timer *restrict timer)
   //  00:00\0
   size_t size = 6;
   if (hours) {
-    size_t size_of_hours = floor(log10(hours));
+    size_t size_of_hours = int_length(hours);
     size+=size_of_hours+1;
   }
   char * output = malloc(sizeof(char) * size);

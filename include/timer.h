@@ -1,5 +1,5 @@
-#ifndef TIMER_H_
-#define TIMER_H_
+#ifndef TIMER_H__
+#define TIMER_H__
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -22,7 +22,6 @@ typedef struct {
   unsigned int pomodoro_count;
 } Timer;
 
-void initialize_timer(Timer *timer);
 void Timer_reduce_second_sleep(Timer * timer);
 void Timer_set_seconds_based_on_type(Timer * timer);
 void Timer_cycle_type(Timer * timer);
@@ -33,4 +32,3 @@ void Timer_pause(Timer * timer);
 void Timer_unpause(Timer * timer);
 void Timer_toggle_pause(Timer * timer);
 #endif
-

@@ -5,23 +5,32 @@ SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
 DEB_DIR = debug
+SHARED_DIR = shared
 
-SRC_CTL = src/potatoctl.c
+SRC_CTL = src/potatoctl.c src/utils.c src/client.c
 OBJ_CTL = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_CTL))
 
-SRC_D = src/timer.c src/utils.c src/potatod.c
+SRC_D = src/timer.c src/potatod.c src/utils.c
 OBJ_D = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_D))
+
+SRC_TUI = src/potatotui.c src/timer.c src/utils.c
+OBJ_TUI = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_TUI))
+
+D_NAME = potatod
+CTL_NAME = potatoctl
+TUI_NAME = potui
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-all: options bin/potatod bin/potatoctl
+all: options ${BIN_DIR}/${D_NAME} ${BIN_DIR}/${CTL_NAME} ${BIN_DIR}/${TUI_NAME}
 
 install: all install_options
 	mkdir -p ${DESTDIR}${PREFIX}/bin
-	cp bin/potatod ${DESTDIR}${PREFIX}/bin
-	cp bin/potatoctl ${DESTDIR}${PREFIX}/bin
+	cp ${BIN_DIR}/${D_NAME} ${DESTDIR}${PREFIX}/bin
+	cp ${BIN_DIR}/${CTL_NAME} ${DESTDIR}${PREFIX}/bin
+	cp ${BIN_DIR}/${TUI_NAME} ${DESTDIR}${PREFIX}/bin
 
 
 ${OBJ_CTL} ${OBJ_D}: include/signal.h config.h config.mk
@@ -37,21 +46,26 @@ options:
 	@echo "LDFLAGS  = ${LDFLAGS}"
 	@echo "CC       = ${CC}"
 
-${BIN_DIR}/potatod: ${OBJ_D}
+${BIN_DIR}/${D_NAME}: ${OBJ_D}
 	mkdir -p $(BIN_DIR)
 	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJ_D}
 
-${BIN_DIR}/potatoctl: ${OBJ_CTL}
+${BIN_DIR}/${CTL_NAME}: ${OBJ_CTL}
 	mkdir -p $(BIN_DIR)
 	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJ_CTL}
 
-debug: ${DEB_DIR}/potatod ${DEB_DIR}/potatoctl
+${BIN_DIR}/${TUI_NAME}: ${OBJ_TUI}
+	mkdir -p $(BIN_DIR)
+	${CC} ${CFLAGS} ${LDFLAGS} `pkg-config --libs --cflags ncurses` -o $@ ${OBJ_TUI}
 
-${DEB_DIR}/potatod: ${OBJ_D}
+
+debug: ${DEB_DIR}/${D_NAME} ${DEB_DIR}/${CTL_NAME}
+
+${DEB_DIR}/${D_NAME}: ${OBJ_D}
 	mkdir -p $(DEB_DIR)
 	${CC} ${CFLAGS} ${LDFLAGS} ${DEBFLAGS} -o $@ ${OBJ_D}
 
-${DEB_DIR}/potatoctl: ${OBJ_CTL}
+${DEB_DIR}/${CTL_NAME}: ${OBJ_CTL}
 	mkdir -p $(DEB_DIR)
 	${CC} ${CFLAGS} ${LDFLAGS} ${DEBFLAGS} -o $@ ${OBJ_CTL}
 
@@ -63,5 +77,5 @@ clean:
 	rm bin obj -rf
 
 uninstall:
-	rm ${DESTDIR}${PREFIX}/bin/potatod
-	rm ${DESTDIR}${PREFIX}/bin/potatoctl
+	rm ${DESTDIR}${PREFIX}/bin/${D_NAME}
+	rm ${DESTDIR}${PREFIX}/bin/${CTL_NAME}

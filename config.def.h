@@ -46,4 +46,5 @@ static const char* ON_UNPAUSE_COMMANDS[] = {
   #define APP_PRINT_POMODORO_COUNT 1
   #define APP_FLUSH 1
   #define APP_NEW_LINE_AT_QUIT 1
+  #define APP_RUN_SOCKET 1
 #endif

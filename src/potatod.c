@@ -3,9 +3,17 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include "../include/timer.h"
 #include "../include/signal.h"
+#include "../include/socket.h"
 
 #include "../config.h"
 #include "../include/utils.h"
@@ -15,11 +23,12 @@
   #define APP_PRINT_POMODORO_COUNT 0
   #define APP_FLUSH 0
   #define APP_NEW_LINE_AT_QUIT 0
+  #define APP_RUN_SOCKET 1
 #endif
 
 typedef struct {
   _Bool flush, notification;
-  _Bool new_line_at_quit, print_pomodoro_count;
+  _Bool new_line_at_quit, print_pomodoro_count, run_socket;
 } App;
 
 Timer timer;
@@ -201,6 +210,7 @@ void initialize_app()
     app.notification = APP_NOTIFICATION;
     app.print_pomodoro_count = APP_PRINT_POMODORO_COUNT;
     app.new_line_at_quit = APP_NEW_LINE_AT_QUIT;
+    app.run_socket = APP_RUN_SOCKET;
   #endif
 }
 
@@ -301,8 +311,88 @@ void assign_signals_to_handlers()
   signal(SIG_RESET, reset_signal_handler);
 }
 
+
+// #define PORT 8080
+void *run_sock_server_thread(void *arg)
+{
+  int PORT = getpid();
+  int server_fd, new_socket;
+  ssize_t valread;
+  struct sockaddr_in address;
+  int opt = 1;
+  socklen_t addrlen = sizeof(address);
+  char buffer[1024] = { 0 };
+
+  // Creating socket file descriptor
+  if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+      perror("socket failed");
+      exit(EXIT_FAILURE);
+  }
+
+  // Forcefully attaching socket to the port 8080
+  if (setsockopt(server_fd, SOL_SOCKET,
+                 SO_REUSEADDR | SO_REUSEPORT, &opt,
+                 sizeof(opt))) {
+      perror("setsockopt");
+      exit(EXIT_FAILURE);
+  }
+  address.sin_family = AF_INET;
+  address.sin_addr.s_addr = INADDR_ANY;
+  address.sin_port = htons(PORT);
+
+  // Forcefully attaching socket to the port 8080
+  if (bind(server_fd, (struct sockaddr*)&address,
+           sizeof(address))
+      < 0) {
+      perror("bind failed");
+      exit(EXIT_FAILURE);
+  }
+  if (listen(server_fd, 3) < 0) {
+      perror("listen");
+      exit(EXIT_FAILURE);
+  }
+  while (1) {
+    if ((new_socket
+         = accept(server_fd, (struct sockaddr*)&address,
+                  &addrlen))
+        < 0) {
+        perror("accept");
+        exit(EXIT_FAILURE);
+    }
+    valread = read(new_socket, buffer, 1024 - 1);
+
+    if (!valread)
+      continue;
+
+    SocketRequest req;
+    sscanf(buffer, "%d", &req);
+
+    char * message;
+    size_t message_len;
+    int number;
+    switch (req) {
+      case REQ_SECONDS: {
+        number = timer.seconds;
+        break;
+      }
+      case REQ_TYPE: {
+        number = timer.type;
+        break;
+      }
+    }
+    message_len = int_length(number)+1;
+    message = malloc(message_len*sizeof(char));
+    snprintf(message, message_len, "%d", number);
+
+    send(new_socket, message, message_len, 0);
+    close(new_socket);
+  }
+  pthread_exit(EXIT_SUCCESS);
+}
+
 int main(int argc, char *argv[])
 {
+
   initialize_app();
   read_options_to_app(argc, argv);
 
@@ -313,6 +403,11 @@ int main(int argc, char *argv[])
 
   create_pid_file();
   assign_signals_to_handlers();
+
+  if (app.run_socket) {
+    pthread_t thread1;
+    pthread_create(&thread1, NULL, run_sock_server_thread, NULL);
+  }
 
   if (app.notification)
     send_notification_based_on_timertype(timer.type);
