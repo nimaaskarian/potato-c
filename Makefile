@@ -16,8 +16,8 @@ OBJ_D = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_D))
 SRC_TUI = src/potatotui.c src/timer.c src/utils.c
 OBJ_TUI = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_TUI))
 
-D_NAME = potatod
-CTL_NAME = potatoctl
+D_NAME = potd
+CTL_NAME = potctl
 TUI_NAME = potui
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
@@ -59,7 +59,7 @@ ${BIN_DIR}/${TUI_NAME}: ${OBJ_TUI}
 	${CC} ${CFLAGS} ${LDFLAGS} `pkg-config --libs --cflags ncurses` -o $@ ${OBJ_TUI}
 
 
-debug: ${DEB_DIR}/${D_NAME} ${DEB_DIR}/${CTL_NAME}
+debug: ${DEB_DIR}/${D_NAME} ${DEB_DIR}/${CTL_NAME} ${DEB_DIR}/${TUI_NAME}
 
 ${DEB_DIR}/${D_NAME}: ${OBJ_D}
 	mkdir -p $(DEB_DIR)
@@ -69,13 +69,17 @@ ${DEB_DIR}/${CTL_NAME}: ${OBJ_CTL}
 	mkdir -p $(DEB_DIR)
 	${CC} ${CFLAGS} ${LDFLAGS} ${DEBFLAGS} -o $@ ${OBJ_CTL}
 
+${DEB_DIR}/${TUI_NAME}: ${OBJ_TUI}
+	mkdir -p $(DEB_DIR)
+	${CC} ${CFLAGS} ${LDFLAGS} ${DEBFLAGS} `pkg-config --libs --cflags ncurses` -o $@ ${OBJ_TUI}
+
 config.h: 
 	cp config.def.h $@
 
 clean:
-	rm config.h
-	rm bin obj -rf
+	rm $(OBJ_DIR) $(BIN_DIR) $(DEB_DIR) -rf
 
 uninstall:
 	rm ${DESTDIR}${PREFIX}/bin/${D_NAME}
 	rm ${DESTDIR}${PREFIX}/bin/${CTL_NAME}
+	rm ${DESTDIR}${PREFIX}/bin/${TUI_NAME}
