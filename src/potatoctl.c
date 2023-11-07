@@ -32,7 +32,7 @@ void handle_list_pid_files(char * pid_str, int index)
   timer.pomodoro_count = send_socket_request_return_num(REQ_POMODOROS,pid);
   timer.paused = send_socket_request_return_num(REQ_PAUSED, pid);
 
-  char * is_paused = timer.paused ? "No" : "Yes";
+  char * is_paused = timer.paused ? "Yes" : "No";
 
   char * time_left = Timer_time_left(&timer);
   printf("%d\t%s\t%s\t%s\t%d\n", index, pid_str, time_left, is_paused, timer.pomodoro_count);
