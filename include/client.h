@@ -1,5 +1,8 @@
 #ifndef CLIENT_H__
 #define CLIENT_H__
+#include <arpa/inet.h>
+#include <sys/socket.h>
+
 #include "../include/signal.h"
 #include "../include/socket.h"
 
@@ -20,4 +23,8 @@ handle_kill(reset_pomodoro, SIG_RESET);
 
 void run_function_on_pid_file_index(void(* handler)(char *, int index), int selected_index);
 void handle_list_pid_files(char * str, int index);
+int connect_socket(int port);
+void get_type(char *str, int index);
+void get_seconds(char *str, int index);
+int send_socket_request_return_num(SocketRequest req, int pid);
 #endif // !CLIENT_H__

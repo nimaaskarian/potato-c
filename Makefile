@@ -5,16 +5,20 @@ SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
 DEB_DIR = debug
+TESTS_NAME = tests
 SHARED_DIR = shared
 
-SRC_CTL = src/potatoctl.c src/utils.c src/client.c
+SRC_CTL = src/potatoctl.c src/utils.c src/client.c src/socket.c src/timer.c
 OBJ_CTL = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_CTL))
 
-SRC_D = src/timer.c src/potatod.c src/utils.c
+SRC_D = src/timer.c src/potatod.c src/utils.c src/socket.c
 OBJ_D = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_D))
 
-SRC_TUI = src/potatotui.c src/timer.c src/utils.c
+SRC_TUI = src/potatotui.c src/timer.c src/utils.c src/socket.c
 OBJ_TUI = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_TUI))
+
+SRC_TESTS = src/tests.c src/timer.c src/utils.c
+OBJ_TESTS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_TESTS))
 
 D_NAME = potd
 CTL_NAME = potctl
@@ -24,7 +28,11 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-all: options ${BIN_DIR}/${D_NAME} ${BIN_DIR}/${CTL_NAME} ${BIN_DIR}/${TUI_NAME}
+all: options ${BIN_DIR}/${D_NAME} ${BIN_DIR}/${CTL_NAME} ${BIN_DIR}/${TUI_NAME} ${DEB_DIR}/${TESTS_NAME} test
+
+test:
+	@echo Running tests:
+	@./${DEB_DIR}/${TESTS_NAME} && echo Tests are looking good!
 
 install: all install_options
 	mkdir -p ${DESTDIR}${PREFIX}/bin
@@ -32,8 +40,11 @@ install: all install_options
 	cp ${BIN_DIR}/${CTL_NAME} ${DESTDIR}${PREFIX}/bin
 	cp ${BIN_DIR}/${TUI_NAME} ${DESTDIR}${PREFIX}/bin
 
+${DEB_DIR}/${TESTS_NAME}: ${OBJ_TESTS}
+	mkdir -p ${DEB_DIR}
+	$(CC) -o ${DEB_DIR}/${TESTS_NAME} ${OBJ_TESTS}
 
-${OBJ_CTL} ${OBJ_D}: include/signal.h config.h config.mk
+${OBJ_CTL} ${OBJ_D} ${OBJ_TUI} ${OBJ_TESTS}: include/signal.h config.h config.mk
 
 install_options:
 	@echo potato install options:

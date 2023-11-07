@@ -62,6 +62,8 @@ void Timer_cycle_type(Timer *restrict timer)
 {
   switch (timer->type) {
     case POMODORO_TYPE:
+      if (timer->pomodoro_count <= 0)
+        break;
       timer->type = SHORT_BREAK_TYPE;
       timer->pomodoro_count--;
     break;
@@ -71,8 +73,9 @@ void Timer_cycle_type(Timer *restrict timer)
     case LONG_BREAK_TYPE:
       return Timer_initialize(timer);
   }
-  if (timer->pomodoro_count == 0)
+  if (timer->pomodoro_count <= 0) {
     timer->type = LONG_BREAK_TYPE;
+  }
 }
 
 void Timer_initialize(Timer *restrict timer)

@@ -297,9 +297,19 @@ void decrease_pomodoro_count_signal_handler()
 
 void assign_signals_to_handlers()
 {
-  signal(SIGQUIT, quit);
   signal(SIGINT, quit);
+  signal(SIGILL, quit);
+  signal(SIGABRT, quit);
+  signal(SIGFPE, quit);
+  signal(SIGSEGV, quit);
   signal(SIGTERM, quit);
+  signal(SIGQUIT, quit);
+  signal(SIGTRAP, quit);
+  signal(SIGKILL, quit);
+  signal(SIGPIPE, quit);
+  signal(SIGALRM, quit);
+
+
   signal(SIG_PAUSE, pause_signal_handler);
   signal(SIG_UNPAUSE, unpause_signal_handler);
   signal(SIG_TPAUSE, toggle_pause_signal_handler);
@@ -315,7 +325,7 @@ void assign_signals_to_handlers()
 // #define PORT 8080
 void *run_sock_server_thread(void *arg)
 {
-  int PORT = getpid();
+  int port = return_sock_port_from_number(getpid());
   int server_fd, new_socket;
   ssize_t valread;
   struct sockaddr_in address;
@@ -338,7 +348,7 @@ void *run_sock_server_thread(void *arg)
   }
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = INADDR_ANY;
-  address.sin_port = htons(PORT);
+  address.sin_port = htons(port);
 
   // Forcefully attaching socket to the port 8080
   if (bind(server_fd, (struct sockaddr*)&address,
@@ -377,6 +387,14 @@ void *run_sock_server_thread(void *arg)
       }
       case REQ_TYPE: {
         number = timer.type;
+        break;
+      }
+      case REQ_POMODOROS: {
+        number = timer.pomodoro_count;
+        break;
+      }
+      case REQ_PAUSED: {
+        number = timer.paused;
         break;
       }
     }
