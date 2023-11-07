@@ -10,6 +10,7 @@
 #include "../include/client.h"
 #include "../include/socket.h"
 #include "../include/utils.h"
+#include "../include/timer.h"
 
 #define handle_kill(NAME, SIG) void handle_##NAME(char *str, int index)\
 {\
@@ -49,13 +50,99 @@ void run_function_on_pid_file_index(void(* handler)(char *, int index), int sele
   }
 }
 
+void remove_potato_pid_file(char *name, int index)
+{
+  char path[PATH_MAX];
+  snprintf(path, PATH_MAX, "%s/%s", POTATO_PIDS_DIRECTORY, name);
+
+  remove(path);
+}
+
+
+void run_function_on_pid_file_pid(void(* handler)(char *, int index), int selected_pid)
+{
+  DIR *dp;
+  struct dirent *ep;
+  dp = opendir (POTATO_PIDS_DIRECTORY);
+  int index = 0;
+
+  if (dp != NULL)
+  {
+    while ((ep = readdir (dp)) != NULL) {
+      if (strcmp(ep->d_name, ".") && strcmp(ep->d_name, "..")) {
+        if (atoi(ep->d_name) == selected_pid || selected_pid == EVERY_MEMBER)
+          handler(ep->d_name, index);
+        index++;
+      }
+    }
+
+    (void) closedir (dp);
+    return;
+  }
+}
+
+unsigned int pids_length()
+{
+  DIR *dp;
+  struct dirent *ep;
+  dp = opendir (POTATO_PIDS_DIRECTORY);
+
+  unsigned int output = 0;
+  if (dp != NULL)
+  {
+    while ((ep = readdir (dp)) != NULL) {
+      if (strcmp(ep->d_name, ".") && strcmp(ep->d_name, "..")) {
+        output++;
+      }
+    }
+  }
+  return output;
+}
+
+Timer * request_timer(pid_t pid)
+{
+  Timer *timer = malloc(sizeof(Timer));
+  timer->seconds = send_socket_request_return_num(REQ_SECONDS,pid);
+  if (timer->seconds == -1) {
+    free(timer);
+    return NULL;
+  }
+  timer->type = send_socket_request_return_num(REQ_TYPE,pid);
+  timer->pomodoro_count = send_socket_request_return_num(REQ_POMODOROS,pid);
+  timer->paused = send_socket_request_return_num(REQ_PAUSED, pid);
+  return timer;
+}
+
+pid_t pid_at_index(unsigned int selected_index)
+{
+  DIR *dp;
+  struct dirent *ep;
+  dp = opendir (POTATO_PIDS_DIRECTORY);
+
+  pid_t output;
+  int index =0;
+  if (dp != NULL)
+  {
+    while ((ep = readdir (dp)) != NULL) {
+      if (strcmp(ep->d_name, ".") && strcmp(ep->d_name, "..")) {
+        if (index == selected_index)
+          output = atoi(ep->d_name);
+        index++;
+      }
+    }
+  }
+  return output;
+}
+
 int connect_socket(int port)
 {
   int status, valread, client_fd;
   struct sockaddr_in serv_addr;
   char buffer[1024] = { 0 };
   if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    printf("\n Socket creation error \n");
+    char * notif = malloc(sizeof(char)*5);
+    snprintf(notif, 5, "%d", port);
+    send_notification("something", notif);
     return -1;
   }
 

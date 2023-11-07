@@ -5,6 +5,7 @@
 
 #include "../include/signal.h"
 #include "../include/socket.h"
+#include "../include/timer.h"
 
 #define handle_kill(NAME, SIG) void handle_##NAME(char *str, int index);
 
@@ -22,9 +23,11 @@ handle_kill(decrease_pomodoro_count, SIG_DEC_POMODORO_COUNT);
 handle_kill(reset_pomodoro, SIG_RESET);
 
 void run_function_on_pid_file_index(void(* handler)(char *, int index), int selected_index);
-void handle_list_pid_files(char * str, int index);
+void run_function_on_pid_file_pid(void(* handler)(char *, int index), int selected_pid);
 int connect_socket(int port);
-void get_type(char *str, int index);
-void get_seconds(char *str, int index);
 int send_socket_request_return_num(SocketRequest req, int pid);
+unsigned int pids_length();
+pid_t pid_at_index(unsigned int selected_index);
+Timer * request_timer(pid_t pid);
+void remove_potato_pid_file(char *name, int index);
 #endif // !CLIENT_H__

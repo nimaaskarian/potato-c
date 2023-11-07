@@ -21,22 +21,18 @@
 void handle_list_pid_files(char * pid_str, int index)
 {
   int pid = atoi(pid_str);
-  Timer timer;
-  timer.seconds = send_socket_request_return_num(REQ_SECONDS,pid);
-  if (timer.seconds == -1) {
+  Timer *timer = request_timer(pid);
+  if (timer == NULL) {
     printf("%d\t%s\n", index, pid_str);
     return;
   }
 
-  timer.type = send_socket_request_return_num(REQ_TYPE,pid);
-  timer.pomodoro_count = send_socket_request_return_num(REQ_POMODOROS,pid);
-  timer.paused = send_socket_request_return_num(REQ_PAUSED, pid);
+  char * is_paused = timer->paused ? "Yes" : "No";
 
-  char * is_paused = timer.paused ? "Yes" : "No";
-
-  char * time_left = Timer_time_left(&timer);
-  printf("%d\t%s\t%s\t%s\t%d\n", index, pid_str, time_left, is_paused, timer.pomodoro_count);
+  char * time_left = Timer_time_left(timer);
+  printf("%d\t%s\t%s\t%s\t%d\n", index, pid_str, time_left, is_paused, timer->pomodoro_count);
   free(time_left);
+  free(timer);
 }
 
 void get_type(char *pid_str, int index)
@@ -47,14 +43,6 @@ void get_type(char *pid_str, int index)
 void get_seconds(char *pid_str, int index)
 {
   printf("%d\n", send_socket_request_return_num(REQ_SECONDS,atoi(pid_str)));
-}
-
-void remove_potato_pid_file(char *name, int index)
-{
-  char path[PATH_MAX];
-  snprintf(path, PATH_MAX, "%s/%s", POTATO_PIDS_DIRECTORY, name);
-
-  remove(path);
 }
 
 int main(int argc, char *argv[])
