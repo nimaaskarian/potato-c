@@ -45,14 +45,23 @@ void get_seconds(char *pid_str, int index)
   printf("%d\n", send_socket_request_return_num(REQ_SECONDS,atoi(pid_str)));
 }
 
+void list_all_timers()
+{
+  puts("INDEX\tPID\tTIME\tPAUSED\tPOMODOROS");
+  run_function_on_pid_file_index(handle_list_pid_files, EVERY_MEMBER);
+}
+
 int main(int argc, char *argv[])
 {   
+  if (argc < 2) {
+    list_all_timers();
+    return EXIT_SUCCESS;
+  }
   int ch;
   while ((ch = getopt(argc, argv, "T::S::c::lu::L::s::p::t::q::d::i::I::D::r::")) != -1) {
     switch (ch) {
       case 'l': 
-        puts("INDEX\tPID\tTIME\tPAUSED\tPOMODOROS");
-        run_function_on_pid_file_index(handle_list_pid_files, EVERY_MEMBER);
+        list_all_timers();
       break;
 
       case_index('c', remove_potato_pid_file);
