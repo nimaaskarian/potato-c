@@ -10,6 +10,12 @@
 #include "../include/timer.h"
 #include "../include/client.h"
 
+typedef struct {
+  int file_index, priority;
+  char note[4096], message[4096];
+  _Bool done;
+} Todo;
+void bubble_sort_todos_priority(Todo todos[], int size);
 void initialize_screen()
 {
   initscr();
@@ -173,11 +179,6 @@ char * todos_path()
 
   return todo_path;
 }
-typedef struct {
-  int file_index, priority;
-  char note[4096], message[4096];
-  _Bool done;
-} Todo;
 
 unsigned int read_todos(Todo todos[])
 {
@@ -215,6 +216,8 @@ unsigned int read_todos(Todo todos[])
   free(note);
   free(todo);
 
+  bubble_sort_todos_priority(todos, output);
+
   return output;
 }
 
@@ -227,8 +230,60 @@ void write_todos_to_scr(Todo todos[], int size)
   }
 }
 
-void write_todos_to_file(Todo todos[], int todos_size);
+void Todo_swap(Todo *t1, Todo *t2)
+{
+  Todo temp_t = *t1;
+  *t1 = *t2;
+  *t2 = temp_t;
+}
+void remove_todos_at_index(Todo *todos, int *size, int index)
+{
+  int i;
+  for(i = index; i < *size - 1; i++) todos[i] = todos[i + 1];
+  (*size)--;
+}
+
+void bubble_sort_todos_priority(Todo todos[], int size)
+{
+  _Bool swapped;
+  for (int i = 0; i < size-1; i++) {
+    swapped = FALSE;
+    for (int j = 0; j < size - i - 1; j++){
+      if (todos[j].priority == 0) {
+        Todo_swap(&todos[j], &todos[j+1]);
+        swapped = TRUE;
+        continue;
+      }
+      if (todos[j+1].priority == 0)
+        continue;
+      if (todos[j].priority > todos[j+1].priority) {
+        Todo_swap(&todos[j], &todos[j+1]);
+        swapped = TRUE;
+      }
+    }
+    if (!swapped)
+      break;
+  }
+}
+
+void clear_todos_on_scr(int todos_size)
+{
+  for (int i = TODOS_START; i < TODOS_START+todos_size; i++) {
+    move(i, 0);
+    clrtoeol();
+  }
+}
+
 void change_color_line(int line, int color_pair);
+void fix_selected_index_and_highlight(int * selected_index, int todos_size)
+{
+  while (*selected_index >= todos_size && *selected_index > 0)
+    (*selected_index)--;
+  change_color_line(TODOS_START+*selected_index, 1);
+}
+
+void write_todos_to_file(Todo todos[], int todos_size);
+_Bool todos_changed = FALSE;
 void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo todos[])
 {
   switch(ch) {
@@ -239,24 +294,26 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
       (*selected_index)++;
     break;
     case 'a': {
+      todos_changed = TRUE;
       char str[100];
       Todo todo;
       todo.priority = -1;
+      todo.file_index = -1;
       timer_thread_paused = 1;
       nodelay(stdscr, FALSE);
       echo();
 
+      mvprintw(getmaxy(stdscr)-1, 0, "Todo message: ");
+      getstr(str);
+      strcpy(todo.message, str);
+
+      move(getmaxy(stdscr)-1, 0);
+      clrtoeol();
       while (todo.priority < 0 || todo.priority > 9){
         mvprintw(getmaxy(stdscr)-1, 0, "Todo priority [0]: ");
         getstr(str);
         todo.priority = atoi(str);
       }
-      move(getmaxy(stdscr)-1, 0);
-      clrtoeol();
-      mvprintw(getmaxy(stdscr)-1, 0, "Todo message: ");
-      int i = 0;
-      getstr(str);
-      strcpy(todo.message, str);
 
       noecho();
       timer_thread_paused = 0;
@@ -265,13 +322,19 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
       move(getmaxy(stdscr)-1, 0);
       clrtoeol();
       todo.done = 0;
-      todo.file_index = -1;
       todos[*todos_size] = todo;
       (*todos_size)++;
+      bubble_sort_todos_priority(todos, *todos_size);
       write_todos_to_scr(todos, *todos_size);
       change_color_line(TODOS_START+*selected_index, 1);
       break;
     }
+    case 'd':
+      clear_todos_on_scr(*todos_size);
+      remove_todos_at_index(todos,todos_size, *selected_index);
+      write_todos_to_scr(todos, *todos_size);
+      fix_selected_index_and_highlight(selected_index, *todos_size);
+    break;
     case '\n':
       if (*todos_size == 0)
         break;
@@ -285,18 +348,20 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
       attroff(COLOR_PAIR(1));
       (*selected_index)++;
     break;
+    case 'R':
+      todos_changed = FALSE;
+      *todos_size = read_todos(todos);
+      write_todos_to_scr(todos, *todos_size);
+      fix_selected_index_and_highlight(selected_index, *todos_size);
+    break;
     case 'w':
+      todos_changed = FALSE;
       write_todos_to_file(todos, *todos_size);
-      for (int i = TODOS_START; i < TODOS_START+*todos_size; i++) {
-        move(i, 0);
-        clrtoeol();
-      }
+      clear_todos_on_scr(*todos_size);
       *todos_size = read_todos(todos);
       write_todos_to_scr(todos, *todos_size);
       mvprintw(getmaxy(stdscr)-1, 0, "Wrote to file");
-      while (*selected_index >= *todos_size && *selected_index > 0)
-        (*selected_index)--;
-      change_color_line(TODOS_START+*selected_index, 1);
+      fix_selected_index_and_highlight(selected_index, *todos_size);
     break;
   }
   if (*selected_index >= *todos_size)
@@ -372,8 +437,6 @@ void change_color_line(int line, int color_pair)
 #define MAX_CHAR 1000
 void write_todos_to_file(Todo todos[], int todos_size)
 {
-  if (todos_size < 1)
-    return;
   FILE * fp_src;
   char line[MAX_CHAR];
   fp_src = fopen(todos_path(),"r");
@@ -387,38 +450,30 @@ void write_todos_to_file(Todo todos[], int todos_size)
   fseek(fp_src, 0, SEEK_SET);
   int current_line = 0;
 
-
-  int todos_index = 0;
-  while (fgets(line, sizeof(line), fp_src) != NULL) {
-    #define CURRENT_TODO todos[todos_index]
-    if (todos_index >= todos_size)
-      break;
-    if (current_line != CURRENT_TODO.file_index || !CURRENT_TODO.done) {
-      if (todos_index)
-        fprintf(fp_tmp, "\n");
-      fprintf(fp_tmp, "%s", line);
-      todos_index++;
-    }
-    current_line++;
-  }
   for (int i = 0; i < todos_size; i++) {
-    #define CURRENT_TODO todos[i]
-    if (CURRENT_TODO.done) {
+    if (todos[i].done) {
       fseek(fp_src, -strlen(line), SEEK_CUR);
-      if (strlen(CURRENT_TODO.note)) {
-        fprintf(fp_tmp, "[-%d]>%s %s\n", CURRENT_TODO.priority, CURRENT_TODO.note, CURRENT_TODO.message);
+      if (strlen(todos[i].note)) {
+        fprintf(fp_tmp, "[-%d]>%s %s\n", todos[i].priority, todos[i].note, todos[i].message);
       } else {
-        fprintf(fp_tmp, "[-%d] %s\n", CURRENT_TODO.priority, CURRENT_TODO.message);
+        fprintf(fp_tmp, "[-%d] %s\n", todos[i].priority, todos[i].message);
       }
       continue;
     }
-    if (CURRENT_TODO.file_index == -1) {
-      if (strlen(CURRENT_TODO.note)) {
-        fprintf(fp_tmp, "[%d]>%s %s\n", CURRENT_TODO.priority, CURRENT_TODO.note, CURRENT_TODO.message);
-      } else {
-        fprintf(fp_tmp, "[%d] %s\n", CURRENT_TODO.priority, CURRENT_TODO.message);
-      }
+    if (strlen(todos[i].note)) {
+      fprintf(fp_tmp, "[%d]>%s %s\n", todos[i].priority, todos[i].note, todos[i].message);
+    } else {
+      fprintf(fp_tmp, "[%d] %s\n", todos[i].priority, todos[i].message);
     }
+  }
+
+  while (fgets(line, sizeof(line), fp_src) != NULL) {
+    char ch;
+    sscanf(line, "[%c]", &ch);
+    if (ch == '-') {
+      fprintf(fp_tmp, "%s", line);
+    } 
+    current_line++;
   }
   fclose(fp_tmp);
   fclose(fp_src);
@@ -445,9 +500,8 @@ void write_todos_to_file(Todo todos[], int todos_size)
 
 
 #define MAX_TODOS 40
-void start_timer_loop_on_thread(pthread_t *thread)
+void start_timer_loop_on_thread()
 {
-  pthread_create(thread, NULL, timer_thread, NULL);
   mvprintw(TODOS_START-1, 0,"Todos:");
   Todo todos[MAX_TODOS];
   int todos_size = read_todos(todos);
@@ -458,8 +512,23 @@ void start_timer_loop_on_thread(pthread_t *thread)
 
   while(timer_thread_paused == 0) {
     int ch = getch();
-    if (handle_input_character_common(ch))
+    if (handle_input_character_common(ch)) {
+      if (todos_changed) {
+        timer_thread_paused = 1;
+        nodelay(stdscr, FALSE);
+        echo();
+        mvprintw(getmaxy(stdscr)-1, 0,"Todo changes are not saved. Save? [Y/n]: ");
+        char ch = getch();
+        if (ch != 'n') {
+          handle_input_todos_menu('w', &selected_index, &todos_size, todos);
+        }
+
+        timer_thread_paused = 0;
+        nodelay(stdscr, TRUE);
+        noecho();
+      }
       break;
+    }
     int prior_selected_index = selected_index;
     handle_input_todos_menu(ch, &selected_index, &todos_size, todos);
 
@@ -476,6 +545,7 @@ void start_timer_loop_on_thread(pthread_t *thread)
 int main(int argc, char *argv[])
 {
   pthread_t thread1;
+  pthread_create(&thread1, NULL, timer_thread, NULL);
   initialize_screen();
   int selected_index = 0;
   while (1) {
@@ -484,7 +554,7 @@ int main(int argc, char *argv[])
     pid = pid_selection_menu(&selected_index);
     timer_thread_paused = 0;
 
-    start_timer_loop_on_thread(&thread1);
+    start_timer_loop_on_thread();
   }
   return EXIT_SUCCESS;
 }
