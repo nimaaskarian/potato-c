@@ -8,24 +8,21 @@ DEB_DIR = debug
 TESTS_NAME = tests
 SHARED_DIR = shared
 
-SRC_CTL_DEB = src/potatoctl.c src/utils.c src/client.c src/socket.c src/timer.c
-OBJ_CTL_DEB = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.odeb,$(SRC_CTL))
-SRC_D_DEB = src/timer.c src/potatod.c src/utils.c src/socket.c
-OBJ_D_DEB = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.odeb,$(SRC_D))
-SRC_TUI_DEB = src/potatotui.c src/timer.c src/utils.c src/socket.c src/client.c
-OBJ_TUI_DEB = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.odeb,$(SRC_TUI))
-
 SRC_CTL = src/potatoctl.c src/utils.c src/client.c src/socket.c src/timer.c
 OBJ_CTL = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_CTL))
 
 SRC_D = src/timer.c src/potatod.c src/utils.c src/socket.c
 OBJ_D = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_D))
 
-SRC_TUI = src/potatotui.c src/timer.c src/utils.c src/socket.c src/client.c
+SRC_TUI = src/potatotui.c src/timer.c src/utils.c src/socket.c src/client.c src/todo.c src/ncurses-utils.c
 OBJ_TUI = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_TUI))
 
 SRC_TESTS = src/tests.c src/timer.c src/utils.c
 OBJ_TESTS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_TESTS))
+
+OBJ_CTL_DEB = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.odeb,$(SRC_CTL))
+OBJ_D_DEB = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.odeb,$(SRC_D))
+OBJ_TUI_DEB = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.odeb,$(SRC_TUI))
 
 D_NAME = potd
 CTL_NAME = potctl

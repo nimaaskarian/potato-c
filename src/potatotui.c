@@ -9,44 +9,8 @@
 
 #include "../include/timer.h"
 #include "../include/client.h"
-
-typedef struct {
-  int file_index, priority;
-  char note[4096], message[4096];
-  _Bool done;
-} Todo;
-void bubble_sort_todos_priority(Todo todos[], int size);
-void initialize_screen()
-{
-  initscr();
-  if (has_colors()) {
-    use_default_colors();
-    start_color();
-    init_pair(1,COLOR_BLACK, COLOR_WHITE);
-  }
-  /* User input dont appear at screen */
-  noecho();
-  /* Makes terminal report mouse movement events */
-  // mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
-  // printf("\033[?1003h\n");
-  /* User input imediatly avaiable */
-  // mouseinterval(0);
-  raw();
-  cbreak();
-  /* Invisible cursor */
-  curs_set(0);
-  /* Non-blocking getch */
-  nodelay(stdscr, TRUE);
-  /* Enable keypad */
-  keypad(stdscr, TRUE);
-
-}
-
-void quit()
-{
-  endwin();
-  exit(EXIT_SUCCESS);
-}
+#include "../include/todo.h"
+#include "../include/ncurses-utils.h"
 
 #define ESC 27
 int handle_input_character_common(int ch)
@@ -54,7 +18,7 @@ int handle_input_character_common(int ch)
   switch (ch) {
     case 'q':
     case 'Q': 
-      quit();
+      ncurses_quit();
     case ESC:
       return 1;
     break;
@@ -168,111 +132,7 @@ const char * type_string(TimerType type)
   }
 }
 
-char * todos_path()
-{
-  const char* home = getenv("HOME");
-  char *todo_path = malloc(4096*sizeof(char));
-  snprintf(todo_path, 4096, "%s/.local/share/calcurse/todo", home);
 
-  return todo_path;
-}
-
-unsigned int read_todos(Todo todos[])
-{
-  FILE * fp;
-  char * line = NULL;
-  size_t len = 0;
-  ssize_t read;
-  unsigned int output = 0;
-
-  fp = fopen(todos_path(),"r");
-  if (fp == NULL)
-    return output;
-  char * note = malloc(4096*sizeof(char));
-  char * todo = malloc(4096*sizeof(char));
-  int index = 0;
-  while ((read = getline(&line, &len, fp)) != -1) {
-    char is_enabled;
-    int scan_count = sscanf(line,"[%c]>%s %[^\n]",&is_enabled, note, todo);
-    if (!strlen(todo)) {
-      sscanf(line,"[%c] %[^\n]",&is_enabled, todo);
-      strcpy(note, "");
-    }
-    if (is_enabled != '-') {
-      int priority = is_enabled - '0';
-      todos[output].done = FALSE;
-      todos[output].priority = priority;
-      strcpy(todos[output].message, todo);
-      strcpy(todos[output].note, note);
-      todos[output].file_index = index;
-      output++;
-    }
-    strcpy(note, "");
-    strcpy(todo, "");
-    index++;
-  }
-  free(note);
-  free(todo);
-
-  bubble_sort_todos_priority(todos, output);
-
-  return output;
-}
-
-#define TODOS_START 5
-void write_todos_to_scr(Todo todos[], int size)
-{
-  for (int i = 0; i < size; i++) {
-    int is_done_ch = todos[i].done ? 'x' : ' ';
-    mvprintw(TODOS_START+i, 0,"[%c] [%d] %s\n", is_done_ch, todos[i].priority, todos[i].message);
-  }
-}
-
-void Todo_swap(Todo *t1, Todo *t2)
-{
-  Todo temp_t = *t1;
-  *t1 = *t2;
-  *t2 = temp_t;
-}
-void remove_todos_at_index(Todo *todos, int *size, int index)
-{
-  int i;
-  for(i = index; i < *size; i++) todos[i] = todos[i + 1];
-  (*size)--;
-}
-
-void bubble_sort_todos_priority(Todo todos[], int size)
-{
-  _Bool swapped;
-  for (int i = 0; i < size-1; i++) {
-    swapped = FALSE;
-    for (int j = 0; j < size - i - 1; j++){
-      if (todos[j].priority == 0) {
-        Todo_swap(&todos[j], &todos[j+1]);
-        swapped = TRUE;
-        continue;
-      }
-      if (todos[j+1].priority == 0)
-        continue;
-      if (todos[j].priority > todos[j+1].priority) {
-        Todo_swap(&todos[j], &todos[j+1]);
-        swapped = TRUE;
-      }
-    }
-    if (!swapped)
-      break;
-  }
-}
-
-void clear_todos_on_scr(int todos_size)
-{
-  for (int i = TODOS_START; i < TODOS_START+todos_size; i++) {
-    move(i, 0);
-    clrtoeol();
-  }
-}
-
-void change_color_line(int line, int color_pair);
 void fix_selected_index_and_highlight(int * selected_index, int todos_size)
 {
   while (*selected_index >= todos_size && *selected_index > 0)
@@ -280,7 +140,7 @@ void fix_selected_index_and_highlight(int * selected_index, int todos_size)
   change_color_line(TODOS_START+*selected_index, 1);
 }
 
-void write_todos_to_file(Todo todos[], int todos_size);
+void Todo_array_write_to_file(Todo todos[], int todos_size);
 _Bool todos_changed = FALSE;
 Todo get_todo_from_user()
 {
@@ -327,8 +187,8 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
       todos_changed = TRUE;
       todos[*todos_size] = get_todo_from_user();
       (*todos_size)++;
-      bubble_sort_todos_priority(todos, *todos_size);
-      write_todos_to_scr(todos, *todos_size);
+      Todo_array_bubble_sort_priority(todos, *todos_size);
+      Todo_array_print_ncurses(todos, *todos_size);
       change_color_line(TODOS_START+*selected_index, 1);
       break;
     }
@@ -338,15 +198,15 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
       if (!strlen(todo.message))
         strcpy(todo.message, todos[*selected_index].message);
       todos[*selected_index] = todo;
-      bubble_sort_todos_priority(todos, *todos_size);
-      write_todos_to_scr(todos, *todos_size);
+      Todo_array_bubble_sort_priority(todos, *todos_size);
+      Todo_array_print_ncurses(todos, *todos_size);
       change_color_line(TODOS_START+*selected_index, 1);
       break;
     }
     case 'd':
-      clear_todos_on_scr(*todos_size);
-      remove_todos_at_index(todos,todos_size, *selected_index);
-      write_todos_to_scr(todos, *todos_size);
+      ncurses_clear_todos(*todos_size);
+      Todo_remove_array_index(todos,todos_size, *selected_index);
+      Todo_array_print_ncurses(todos, *todos_size);
       fix_selected_index_and_highlight(selected_index, *todos_size);
     break;
     case '\n':
@@ -364,16 +224,16 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
     break;
     case 'R':
       todos_changed = FALSE;
-      *todos_size = read_todos(todos);
-      write_todos_to_scr(todos, *todos_size);
+      *todos_size = Todo_array_read_from_file(todos);
+      Todo_array_print_ncurses(todos, *todos_size);
       fix_selected_index_and_highlight(selected_index, *todos_size);
     break;
     case 'w':
       todos_changed = FALSE;
-      write_todos_to_file(todos, *todos_size);
-      clear_todos_on_scr(*todos_size);
-      *todos_size = read_todos(todos);
-      write_todos_to_scr(todos, *todos_size);
+      Todo_array_write_to_file(todos, *todos_size);
+      ncurses_clear_todos(*todos_size);
+      *todos_size = Todo_array_read_from_file(todos);
+      Todo_array_print_ncurses(todos, *todos_size);
       mvprintw(getmaxy(stdscr)-1, 0, "Wrote to file");
       fix_selected_index_and_highlight(selected_index, *todos_size);
     break;
@@ -427,10 +287,12 @@ void handle_input_timer(int ch)
     break;
     case 'J':
     case '-':
+    case 'h':
       run_function_on_pid_file_pid(handle_decrease_10sec, pid);
     break;
     case '+':
     case 'K':
+    case 'l':
       run_function_on_pid_file_pid(handle_increase_10sec, pid);
     break;
     case 's':
@@ -446,84 +308,13 @@ void handle_input_timer(int ch)
   }
 }
 
-void change_color_line(int line, int color_pair)
-{
-  move(line, 0);
-  chgat(-1, A_NORMAL, color_pair, NULL);
-}
-
-#define MAX_CHAR 1000
-void write_todos_to_file(Todo todos[], int todos_size)
-{
-  FILE * fp_src;
-  char line[MAX_CHAR];
-  fp_src = fopen(todos_path(),"r");
-  #define TMP_FILE "/tmp/potato-c-todos"
-
-  FILE * fp_tmp = fopen(TMP_FILE, "w");
-  if (fp_src == NULL)
-    return;
-  if (fp_tmp == NULL)
-    return;
-  fseek(fp_src, 0, SEEK_SET);
-  int current_line = 0;
-
-  for (int i = 0; i < todos_size; i++) {
-    if (todos[i].done) {
-      fseek(fp_src, -strlen(line), SEEK_CUR);
-      if (strlen(todos[i].note)) {
-        fprintf(fp_tmp, "[-%d]>%s %s\n", todos[i].priority, todos[i].note, todos[i].message);
-      } else {
-        fprintf(fp_tmp, "[-%d] %s\n", todos[i].priority, todos[i].message);
-      }
-      continue;
-    }
-    if (strlen(todos[i].note)) {
-      fprintf(fp_tmp, "[%d]>%s %s\n", todos[i].priority, todos[i].note, todos[i].message);
-    } else {
-      fprintf(fp_tmp, "[%d] %s\n", todos[i].priority, todos[i].message);
-    }
-  }
-
-  while (fgets(line, sizeof(line), fp_src) != NULL) {
-    char ch;
-    sscanf(line, "[%c]", &ch);
-    if (ch == '-') {
-      fprintf(fp_tmp, "%s", line);
-    } 
-    current_line++;
-  }
-  fclose(fp_tmp);
-  fclose(fp_src);
-  if (remove(todos_path()) != 0) {
-    perror("Error deleting the source file");
-    return;
-  }
-
-  if (rename(TMP_FILE, todos_path()) != 0) {
-    // perror("Error renaming temp file");
-    // perror("Error renaming temp file");
-    // If renaming fails, you can copy the content instead        
-    FILE *fp_new_src = fopen(todos_path(), "w");
-    fp_tmp = fopen(TMP_FILE, "r");
-    while (fgets(line, sizeof(line), fp_tmp)) {
-        fprintf(fp_new_src, "%s", line);
-    }
-    fclose(fp_new_src);
-    fclose(fp_tmp);
-    return;
-  }
-
-}
-
-
 #define MAX_TODOS 40
 void start_timer_loop_on_thread()
 {
   mvprintw(TODOS_START-1, 0,"Todos:");
   Todo todos[MAX_TODOS];
-  int todos_size = read_todos(todos);
-  write_todos_to_scr(todos, todos_size);
+  int todos_size = Todo_array_read_from_file(todos);
+  Todo_array_print_ncurses(todos, todos_size);
 
   int selected_index = 0;
   change_color_line(TODOS_START+selected_index, 1);
