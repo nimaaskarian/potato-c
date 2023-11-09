@@ -83,24 +83,20 @@ void handle_input_pid_menu(int ch, int *selected_index, pid_t * pid)
 {
   switch (ch) {
     case 'j':
-    case 'J':
       (*selected_index)++;
       check_pids_length_and_set_selected(selected_index);
       break;
     case 'k':
-    case 'K':
       (*selected_index)--;
       check_pids_length_and_set_selected(selected_index);
       break;
     case 'g':
       *selected_index = 0;
       break;
-    case 'C':
     case 'c':
       run_function_on_pid_file_index(remove_potato_pid_file, *selected_index);
       break;
     case 'D':
-    // case 'd':
       run_function_on_pid_file_index(handle_quit, *selected_index);
       break;
     case 'G':
@@ -153,6 +149,7 @@ pid_t pid_selection_menu(int *selected_index)
     draw_pids(*selected_index);
     napms(1000 / 60);
   }
+  pthread_cancel(thread2);
   return output;
 }
 
@@ -380,6 +377,12 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
       mvprintw(getmaxy(stdscr)-1, 0, "Wrote to file");
       fix_selected_index_and_highlight(selected_index, *todos_size);
     break;
+    case 'G':
+      *selected_index = *todos_size-1 < 0 ? 0 : *todos_size-1;
+    break;
+    case 'g':
+      *selected_index = 0;
+    break;
   }
   if (*selected_index >= *todos_size)
     *selected_index = 0;
@@ -388,8 +391,8 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
   }
 }
 
+Timer *timer = NULL;
 void *timer_thread(void *arg) {
-  Timer *timer = NULL;
   while (1) {
     if (pid)
       timer = get_timer_pid(pid);
@@ -409,10 +412,8 @@ void *timer_thread(void *arg) {
       mvprintw(2,0, "Type: %s", type_string(timer->type));
       free(time_left_str);
     }
-    sleep(1);
-    // napms(1000 / 60);
+    napms(1000/3);
   }
-  free(timer);
 	pthread_exit(EXIT_SUCCESS);
 }
 
