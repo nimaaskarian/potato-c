@@ -5,6 +5,7 @@ typedef enum {
   REQ_TYPE,
   REQ_POMODOROS,
   REQ_PAUSED,
+  REQ_TIMER_FULL,
 } SocketRequest;
 int return_sock_port_from_number(int n);
 #define MAX_PORT 65535

@@ -8,6 +8,13 @@ DEB_DIR = debug
 TESTS_NAME = tests
 SHARED_DIR = shared
 
+SRC_CTL_DEB = src/potatoctl.c src/utils.c src/client.c src/socket.c src/timer.c
+OBJ_CTL_DEB = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.odeb,$(SRC_CTL))
+SRC_D_DEB = src/timer.c src/potatod.c src/utils.c src/socket.c
+OBJ_D_DEB = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.odeb,$(SRC_D))
+SRC_TUI_DEB = src/potatotui.c src/timer.c src/utils.c src/socket.c src/client.c
+OBJ_TUI_DEB = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.odeb,$(SRC_TUI))
+
 SRC_CTL = src/potatoctl.c src/utils.c src/client.c src/socket.c src/timer.c
 OBJ_CTL = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_CTL))
 
@@ -28,6 +35,10 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(OBJ_DIR)/%.odeb: $(SRC_DIR)/%.c
+	mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) ${DEBFLAGS} -c $< -o $@
+
 all: options ${BIN_DIR}/${D_NAME} ${BIN_DIR}/${CTL_NAME} ${BIN_DIR}/${TUI_NAME} #${DEB_DIR}/${TESTS_NAME} test
 
 test:
@@ -44,7 +55,7 @@ ${DEB_DIR}/${TESTS_NAME}: ${OBJ_TESTS}
 	mkdir -p ${DEB_DIR}
 	$(CC) -o ${DEB_DIR}/${TESTS_NAME} ${OBJ_TESTS}
 
-${OBJ_CTL} ${OBJ_D} ${OBJ_TUI} ${OBJ_TESTS}: include/signal.h config.h config.mk
+${OBJ_CTL} ${OBJ_D} ${OBJ_TUI} ${OBJ_TESTS} ${OBJ_DEBUG}: include/signal.h config.h config.mk
 
 install_options:
 	@echo potato install options:
@@ -72,17 +83,17 @@ ${BIN_DIR}/${TUI_NAME}: ${OBJ_TUI}
 
 debug: ${DEB_DIR}/${D_NAME} ${DEB_DIR}/${CTL_NAME} ${DEB_DIR}/${TUI_NAME}
 
-${DEB_DIR}/${D_NAME}: ${OBJ_D}
+${DEB_DIR}/${D_NAME}: ${OBJ_D_DEB}
 	mkdir -p $(DEB_DIR)
-	${CC} ${CFLAGS} ${LDFLAGS} ${DEBFLAGS} -o $@ ${OBJ_D}
+	$(CC) ${CFLAGS} ${LDFLAGS} ${DEBFLAGS} -o $@ ${OBJ_D_DEB}
 
-${DEB_DIR}/${CTL_NAME}: ${OBJ_CTL}
+${DEB_DIR}/${CTL_NAME}: ${OBJ_CTL_DEB}
 	mkdir -p $(DEB_DIR)
-	${CC} ${CFLAGS} ${LDFLAGS} ${DEBFLAGS} -o $@ ${OBJ_CTL}
+	$(CC) ${CFLAGS} ${LDFLAGS} ${DEBFLAGS} -o $@ ${OBJ_CTL_DEB}
 
-${DEB_DIR}/${TUI_NAME}: ${OBJ_TUI}
+${DEB_DIR}/${TUI_NAME}: ${OBJ_TUI_DEB}
 	mkdir -p $(DEB_DIR)
-	${CC} ${CFLAGS} ${LDFLAGS} ${DEBFLAGS} `pkg-config --libs --cflags ncurses` -o $@ ${OBJ_TUI}
+	$(CC) ${CFLAGS} ${LDFLAGS} ${DEBFLAGS} `pkg-config --libs --cflags ncurses` -o $@ ${OBJ_TUI_DEB}
 
 config.h: 
 	cp config.def.h $@

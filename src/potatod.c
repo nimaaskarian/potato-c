@@ -397,13 +397,22 @@ void *run_sock_server_thread(void *arg)
         number = timer.paused;
         break;
       }
+      case REQ_TIMER_FULL: {
+        message_len = int_length(timer.type)+int_length(timer.seconds)+int_length(timer.pomodoro_count)+int_length(timer.paused)+4;
+        message = malloc(message_len*sizeof(char));
+        snprintf(message, message_len, "%d-%d-%d-%d", timer.seconds, timer.pomodoro_count, timer.paused, timer.type);
+        send(new_socket, message, message_len, 0);
+        close(new_socket);
+      }
     }
-    message_len = int_length(number)+1;
-    message = malloc(message_len*sizeof(char));
-    snprintf(message, message_len, "%d", number);
+    if (req != REQ_TIMER_FULL) {
+      message_len = int_length(number)+1;
+      message = malloc(message_len*sizeof(char));
+      snprintf(message, message_len, "%d", number);
 
-    send(new_socket, message, message_len, 0);
-    close(new_socket);
+      send(new_socket, message, message_len, 0);
+      close(new_socket);
+    }
   }
   pthread_exit(EXIT_SUCCESS);
 }

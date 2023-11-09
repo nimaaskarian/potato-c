@@ -203,6 +203,7 @@ unsigned int read_todos(Todo todos[])
     }
     if (is_enabled != '-') {
       int priority = is_enabled - '0';
+      todos[output].done = FALSE;
       todos[output].priority = priority;
       strcpy(todos[output].message, todo);
       strcpy(todos[output].note, note);
@@ -239,7 +240,7 @@ void Todo_swap(Todo *t1, Todo *t2)
 void remove_todos_at_index(Todo *todos, int *size, int index)
 {
   int i;
-  for(i = index; i < *size - 1; i++) todos[i] = todos[i + 1];
+  for(i = index; i < *size; i++) todos[i] = todos[i + 1];
   (*size)--;
 }
 
@@ -284,6 +285,38 @@ void fix_selected_index_and_highlight(int * selected_index, int todos_size)
 
 void write_todos_to_file(Todo todos[], int todos_size);
 _Bool todos_changed = FALSE;
+Todo get_todo_from_user()
+{
+  char str[100];
+  Todo todo;
+  todo.priority = -1;
+  todo.file_index = -1;
+  timer_thread_paused = 1;
+  nodelay(stdscr, FALSE);
+  echo();
+
+  mvprintw(getmaxy(stdscr)-1, 0, "Todo message: ");
+  getstr(str);
+  strcpy(todo.message, str);
+
+  move(getmaxy(stdscr)-1, 0);
+  clrtoeol();
+  while (todo.priority < 0 || todo.priority > 9){
+    mvprintw(getmaxy(stdscr)-1, 0, "Todo priority [0]: ");
+    getstr(str);
+    todo.priority = atoi(str);
+  }
+
+  noecho();
+  timer_thread_paused = 0;
+  nodelay(stdscr, TRUE);
+
+  move(getmaxy(stdscr)-1, 0);
+  clrtoeol();
+  todo.done = FALSE;
+
+  return todo;
+}
 void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo todos[])
 {
   switch(ch) {
@@ -295,35 +328,19 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
     break;
     case 'a': {
       todos_changed = TRUE;
-      char str[100];
-      Todo todo;
-      todo.priority = -1;
-      todo.file_index = -1;
-      timer_thread_paused = 1;
-      nodelay(stdscr, FALSE);
-      echo();
-
-      mvprintw(getmaxy(stdscr)-1, 0, "Todo message: ");
-      getstr(str);
-      strcpy(todo.message, str);
-
-      move(getmaxy(stdscr)-1, 0);
-      clrtoeol();
-      while (todo.priority < 0 || todo.priority > 9){
-        mvprintw(getmaxy(stdscr)-1, 0, "Todo priority [0]: ");
-        getstr(str);
-        todo.priority = atoi(str);
-      }
-
-      noecho();
-      timer_thread_paused = 0;
-      nodelay(stdscr, TRUE);
-
-      move(getmaxy(stdscr)-1, 0);
-      clrtoeol();
-      todo.done = 0;
-      todos[*todos_size] = todo;
+      todos[*todos_size] = get_todo_from_user();
       (*todos_size)++;
+      bubble_sort_todos_priority(todos, *todos_size);
+      write_todos_to_scr(todos, *todos_size);
+      change_color_line(TODOS_START+*selected_index, 1);
+      break;
+    }
+    case 'e': {
+      todos_changed = TRUE;
+      Todo todo = get_todo_from_user();
+      if (!strlen(todo.message))
+        strcpy(todo.message, todos[*selected_index].message);
+      todos[*selected_index] = todo;
       bubble_sort_todos_priority(todos, *todos_size);
       write_todos_to_scr(todos, *todos_size);
       change_color_line(TODOS_START+*selected_index, 1);
@@ -375,7 +392,7 @@ void *timer_thread(void *arg) {
   Timer *timer = NULL;
   while (1) {
     if (pid)
-      timer = request_timer(pid);
+      timer = get_timer_pid(pid);
 
     if (timer == NULL)
       timer_thread_paused = 1;
@@ -392,8 +409,8 @@ void *timer_thread(void *arg) {
       mvprintw(2,0, "Type: %s", type_string(timer->type));
       free(time_left_str);
     }
-    // sleep(1);
-    napms(1000 / 60);
+    sleep(1);
+    // napms(1000 / 60);
   }
   free(timer);
 	pthread_exit(EXIT_SUCCESS);

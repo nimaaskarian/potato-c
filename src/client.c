@@ -138,7 +138,6 @@ int connect_socket(int port)
 {
   int status, valread, client_fd;
   struct sockaddr_in serv_addr;
-  char buffer[1024] = { 0 };
   if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     char * notif = malloc(sizeof(char)*5);
     snprintf(notif, 5, "%d", port);
@@ -161,25 +160,54 @@ int connect_socket(int port)
     return -1;
   }
 
-return client_fd;
+  return client_fd;
+}
+
+char * send_req_return_str(SocketRequest req, int sockfd)
+{
+  char *buffer = malloc(sizeof(char)*1024);
+  size_t size = int_length(req)+1;
+  char* request = malloc(size*sizeof(char));
+  snprintf(request, size, "%d",req);
+
+  send(sockfd, request, size, 0);
+  int valread = read(sockfd, buffer, 1024 - 1);
+  close(sockfd);
+
+  return buffer;
+}
+
+int send_socket_request_with_fd(SocketRequest req, int sockfd)
+{
+  char * buffer = send_req_return_str(req, sockfd);
+
+  int output;
+  sscanf(buffer, "%d", &output);
+  free(buffer);
+  return output;
 }
 
 int send_socket_request_return_num(SocketRequest req, int pid)
 {
-  char buffer[1024];
-  size_t size = int_length(req)+1;
-  char* request = malloc(size*sizeof(char));
-  snprintf(request, size, "%d",req);
-  
   int sockfd = connect_socket(return_sock_port_from_number(pid));
   if (sockfd == -1)
     return -1;
 
-  send(sockfd, request, size, 0);
-
-  int valread = read(sockfd, buffer, 1024 - 1);
-  close(sockfd);
-  int output;
-  sscanf(buffer, "%d", &output);
+  int output = send_socket_request_with_fd(req, sockfd);
   return output;
+}
+
+Timer* get_timer_pid(pid_t pid)
+{
+  #define req REQ_TIMER_FULL
+
+  int sockfd = connect_socket(return_sock_port_from_number(pid));
+  char * buffer = send_req_return_str(req, sockfd);
+
+  Timer * timer;
+  int scanned = sscanf(buffer, "%d-%d-%d-%d", &timer->seconds, &timer->pomodoro_count, &timer->paused, &timer->type);
+  if (scanned < 4)
+    return NULL;
+  free(buffer);
+  return timer;
 }
