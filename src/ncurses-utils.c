@@ -1,4 +1,7 @@
 #include <ncurses.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "../include/ncurses-utils.h"
@@ -58,3 +61,27 @@ void ncurses_unready_for_input()
   curs_set(0);
   noecho();
 }
+
+typedef struct {
+  int y, sleep;
+} ClearLineThreadArgs;
+
+static void * thread_function_clear_line(void * arguments)
+{
+  ClearLineThreadArgs *args = arguments;
+  sleep(args->sleep);
+  ncurses_clear_line(args->y);
+
+  pthread_exit(EXIT_SUCCESS);
+}
+
+void ncurses_sleep_and_clear_line(int sleep, int y)
+{
+  ClearLineThreadArgs args;
+  args.y = y;
+  args.sleep = sleep;
+
+  pthread_t clear_line_thread;
+  pthread_create(&clear_line_thread, NULL, thread_function_clear_line, (void *)&args);
+}
+

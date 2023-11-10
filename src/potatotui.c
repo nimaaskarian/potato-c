@@ -172,7 +172,7 @@ Todo get_todo_from_user()
   ncurses_clear_line(MAX_Y);
 
   while (todo.priority < 0 || todo.priority > 9){
-    mvprintw(getmaxy(stdscr)-1, 0, "Todo priority [0]: ");
+    mvprintw(MAX_Y, 0, "Todo priority [0]: ");
     clrtoeol();
     getstr(str);
     if (!strlen(str)) {
@@ -188,6 +188,7 @@ Todo get_todo_from_user()
 
   return todo;
 }
+
 void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo todos[])
 {
   switch(ch) {
@@ -239,7 +240,7 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
         mvprintw(TODOS_START+(*selected_index), 1, "x");
       else
         mvprintw(TODOS_START+(*selected_index), 1, " ");
-      // mvprintw(getmaxy(stdscr)-1, 0, "%s", todos[*selected_index].message);
+
       attroff(COLOR_PAIR(1));
       (*selected_index)++;
     break;
@@ -256,8 +257,10 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
       ncurses_clear_todos(*todos_size);
       *todos_size = Todo_array_read_from_file(todos);
       Todo_array_print_ncurses(todos, *todos_size);
-      mvprintw(getmaxy(stdscr)-1, 0, "Wrote to file");
+      mvprintw(MAX_Y, 0, "Wrote to file");
       fix_selected_index_and_highlight(selected_index, *todos_size);
+      refresh();
+      ncurses_sleep_and_clear_line(2, MAX_Y);
     break;
     case 'G':
       *selected_index = *todos_size-1 < 0 ? 0 : *todos_size-1;
@@ -273,8 +276,8 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
   }
 }
 
-Timer timer;
 void *get_and_print_timer(void *arg) {
+  Timer timer;
   while (1) {
     if (pid)
       timer = get_timer_pid(pid);
@@ -352,7 +355,7 @@ void start_timer_loop_on_thread()
       if (todos_changed) {
         timer_thread_paused = 1;
         ncurses_ready_for_input();
-        mvprintw(getmaxy(stdscr)-1, 0,"Todo changes are not saved. Save? [Y/n]: ");
+        mvprintw(MAX_Y, 0,"Todo changes are not saved. Save? [Y/n]: ");
         char ch = getch();
         if (ch != 'n') {
           Todo_array_write_to_file(todos, todos_size);
@@ -360,7 +363,6 @@ void start_timer_loop_on_thread()
         timer_thread_paused = 0;
         ncurses_unready_for_input();
       }
-      mvprintw(12,0, "HELLO");
       break;
     }
     int prior_selected_index = selected_index;
