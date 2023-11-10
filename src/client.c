@@ -119,7 +119,7 @@ pid_t pid_at_index(unsigned int selected_index)
   struct dirent *ep;
   dp = opendir (POTATO_PIDS_DIRECTORY);
 
-  pid_t output;
+  pid_t output = 0;
   int index =0;
   if (dp != NULL)
   {
@@ -197,17 +197,19 @@ int send_socket_request_return_num(SocketRequest req, int pid)
   return output;
 }
 
-Timer* get_timer_pid(pid_t pid)
+Timer get_timer_pid(pid_t pid)
 {
   #define req REQ_TIMER_FULL
 
   int sockfd = connect_socket(return_sock_port_from_number(pid));
   char * buffer = send_req_return_str(req, sockfd);
 
-  Timer * timer;
-  int scanned = sscanf(buffer, "%d-%d-%d-%d", &timer->seconds, &timer->pomodoro_count, &timer->paused, &timer->type);
-  if (scanned < 4)
-    return NULL;
+  Timer timer;
+  int scanned = sscanf(buffer, "%d-%d-%d-%d", &timer.seconds, &timer.pomodoro_count, &timer.paused, &timer.type);
   free(buffer);
+
+  if (scanned < 4) {
+    timer.type = -1;
+  }
   return timer;
 }

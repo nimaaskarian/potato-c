@@ -32,13 +32,13 @@ void Todo_array_bubble_sort_priority(Todo todos[], int size)
   for (int i = 0; i < size-1; i++) {
     swapped = 0;
     for (int j = 0; j < size - i - 1; j++){
+      if (todos[j+1].priority == 0)
+        continue;
       if (todos[j].priority == 0) {
         Todo_swap(&todos[j], &todos[j+1]);
         swapped = 1;
         continue;
       }
-      if (todos[j+1].priority == 0)
-        continue;
       if (todos[j].priority > todos[j+1].priority) {
         Todo_swap(&todos[j], &todos[j+1]);
         swapped = 1;
@@ -163,6 +163,7 @@ void Todo_array_write_to_file(Todo todos[], int todos_size)
     }
     fclose(fp_new_src);
     fclose(fp_tmp);
+    remove(TMP_FILE);
     return;
   }
 

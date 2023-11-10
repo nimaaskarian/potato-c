@@ -45,8 +45,9 @@ void check_pids_length_and_set_selected(int *selected_index)
   }
 }
 
-void handle_input_pid_menu(int ch, int *selected_index, pid_t * pid)
+pid_t handle_input_pid_menu(int ch, int *selected_index)
 {
+  pid_t pid = 0;
   switch (ch) {
     case 'j':
       (*selected_index)++;
@@ -61,17 +62,22 @@ void handle_input_pid_menu(int ch, int *selected_index, pid_t * pid)
       break;
     case 'c':
       run_function_on_pid_file_index(remove_potato_pid_file, *selected_index);
+      pids_length_global--;
       break;
     case 'D':
       run_function_on_pid_file_index(handle_quit, *selected_index);
+      pids_length_global--;
       break;
     case 'G':
       *selected_index = pids_length_global-1;
       break;
     case '\n':
-      *pid = pid_at_index(*selected_index);
+      pid = pid_at_index(*selected_index);
     break;
   }
+  if (*selected_index >= pids_length_global)
+    *selected_index = pids_length_global ? pids_length_global - 1 : 0;
+  return pid;
 }
 
 void draw_pids(int selected_index)
@@ -101,21 +107,22 @@ pid_t pid_selection_menu(int *selected_index)
   pthread_t get_pids_thread;
   pthread_create(&get_pids_thread, NULL, get_pids_length_sleep, NULL);
 
-  pid_t output = -1;
+  pid_t selected_pid;
   draw_pids(*selected_index);
 
   while (1) {
     int ch = getch();
     handle_input_character_common(ch);
-    handle_input_pid_menu(ch, selected_index, &output);
-    if (output != -1)
+    selected_pid = handle_input_pid_menu(ch, selected_index);
+
+    if (selected_pid)
       break;
 
     draw_pids(*selected_index);
     napms(1000 / 60);
   }
   pthread_cancel(get_pids_thread);
-  return output;
+  return selected_pid;
 }
 
 pid_t pid;
@@ -147,32 +154,36 @@ void fix_selected_index_and_highlight(int * selected_index, int todos_size)
 {
   while (*selected_index >= todos_size && *selected_index > 0)
     (*selected_index)--;
-  change_color_line(TODOS_START+*selected_index, 1);
+  ncurses_change_color_line(TODOS_START+*selected_index, 1);
 }
 
-void Todo_array_write_to_file(Todo todos[], int todos_size);
 _Bool todos_changed = FALSE;
 Todo get_todo_from_user()
 {
   char str[100];
   Todo todo;
   Todo_initialize(&todo);
-  enable_delay_and_echo();
+  ncurses_ready_for_input();
   pause_timer_thread();
 
   mvprintw(MAX_Y, 0, "Todo message: ");
   getstr(str);
   strcpy(todo.message, str);
-  clear_line(MAX_Y);
+  ncurses_clear_line(MAX_Y);
 
   while (todo.priority < 0 || todo.priority > 9){
     mvprintw(getmaxy(stdscr)-1, 0, "Todo priority [0]: ");
+    clrtoeol();
     getstr(str);
+    if (!strlen(str)) {
+      todo.priority = -1;
+      break;
+    }
     todo.priority = atoi(str);
   }
-  clear_line(MAX_Y);
+  ncurses_clear_line(MAX_Y);
 
-  disable_delay_and_echo();
+  ncurses_unready_for_input();
   unpause_timer_thread();
 
   return todo;
@@ -189,21 +200,28 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
     case 'a': {
       todos_changed = TRUE;
       todos[*todos_size] = get_todo_from_user();
+      if (todos[*todos_size].priority == -1)
+        todos[*todos_size].priority = 0;
       (*todos_size)++;
       Todo_array_bubble_sort_priority(todos, *todos_size);
       Todo_array_print_ncurses(todos, *todos_size);
-      change_color_line(TODOS_START+*selected_index, 1);
+      ncurses_change_color_line(TODOS_START+*selected_index, 1);
       break;
     }
     case 'e': {
       todos_changed = TRUE;
       Todo todo = get_todo_from_user();
+      if (todo.priority == -1)
+        todo.priority = todos[*selected_index].priority;
+      strcpy(todo.note, todos[*selected_index].note);
+
       if (!strlen(todo.message))
         strcpy(todo.message, todos[*selected_index].message);
+
       todos[*selected_index] = todo;
       Todo_array_bubble_sort_priority(todos, *todos_size);
       Todo_array_print_ncurses(todos, *todos_size);
-      change_color_line(TODOS_START+*selected_index, 1);
+      ncurses_change_color_line(TODOS_START+*selected_index, 1);
       break;
     }
     case 'd':
@@ -227,6 +245,7 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
     break;
     case 'R':
       todos_changed = FALSE;
+      ncurses_clear_lines_from_to(TODOS_START, TODOS_START+*todos_size);
       *todos_size = Todo_array_read_from_file(todos);
       Todo_array_print_ncurses(todos, *todos_size);
       fix_selected_index_and_highlight(selected_index, *todos_size);
@@ -254,28 +273,27 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
   }
 }
 
+Timer timer;
 void *get_and_print_timer(void *arg) {
-  Timer *timer = NULL;
   while (1) {
     if (pid)
       timer = get_timer_pid(pid);
 
-    if (timer == NULL)
-      timer_thread_paused = 1;
+    if (timer.type == NULL_TYPE) {
+      pause_timer_thread();
+      break;
+    }
 
     if (!timer_thread_paused) {
-      if (!timer->paused)
-        for (int i = 0; i < 3; i++) {
-          move(i,0);
-          clrtoeol();
-        }
-      char * time_left_str = Timer_time_left(timer);
+      if (!timer.paused)
+        ncurses_clear_lines_from_to(0,3);
+      char * time_left_str = Timer_time_left(&timer);
       mvprintw(0,0, "Time left: %s", time_left_str);
-      mvprintw(1,0, "Pomodoros: %d", timer->pomodoro_count);
-      mvprintw(2,0, "Type: %s", type_string(timer->type));
+      mvprintw(1,0, "Pomodoros: %d", timer.pomodoro_count);
+      mvprintw(2,0, "Type: %s", type_string(timer.type));
       free(time_left_str);
     }
-    napms(1000/3);
+    napms(1000/2);
   }
 	pthread_exit(EXIT_SUCCESS);
 }
@@ -315,13 +333,16 @@ void handle_input_timer(int ch)
 void start_timer_loop_on_thread()
 {
   erase();
+  pthread_t timer_thread;
+  pthread_create(&timer_thread, NULL, get_and_print_timer, NULL);
+
   mvprintw(TODOS_START-1, 0,"Todos:");
   Todo todos[MAX_TODOS];
   int todos_size = Todo_array_read_from_file(todos);
   Todo_array_print_ncurses(todos, todos_size);
 
   int selected_index = 0;
-  change_color_line(TODOS_START+selected_index, 1);
+  ncurses_change_color_line(TODOS_START+selected_index, 1);
 
   while(timer_thread_paused == 0) {
     int ch = getch();
@@ -330,14 +351,14 @@ void start_timer_loop_on_thread()
     if (handle_input_character_common(ch)) {
       if (todos_changed) {
         timer_thread_paused = 1;
-        enable_delay_and_echo();
+        ncurses_ready_for_input();
         mvprintw(getmaxy(stdscr)-1, 0,"Todo changes are not saved. Save? [Y/n]: ");
         char ch = getch();
         if (ch != 'n') {
           Todo_array_write_to_file(todos, todos_size);
         }
         timer_thread_paused = 0;
-        disable_delay_and_echo();
+        ncurses_unready_for_input();
       }
       mvprintw(12,0, "HELLO");
       break;
@@ -347,18 +368,17 @@ void start_timer_loop_on_thread()
 
 
     if (prior_selected_index != selected_index) {
-      change_color_line(TODOS_START+selected_index, 1);
-      change_color_line(TODOS_START+prior_selected_index, 0);
+      ncurses_change_color_line(TODOS_START+selected_index, 1);
+      ncurses_change_color_line(TODOS_START+prior_selected_index, 0);
     }
     napms(1000 / 60);
   }
+  pthread_cancel(timer_thread);
 }
 
 int main(int argc, char *argv[])
 {
-  pthread_t timer_thread;
-  pthread_create(&timer_thread, NULL, get_and_print_timer, NULL);
-  initialize_screen();
+  ncurses_initialize_screen();
   int selected_index = 0;
   while (1) {
     timer_thread_paused = 1;

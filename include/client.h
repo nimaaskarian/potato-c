@@ -31,5 +31,5 @@ pid_t pid_at_index(unsigned int selected_index);
 Timer * request_timer(pid_t pid);
 void remove_potato_pid_file(char *name, int index);
 int send_socket_request_with_fd(SocketRequest req, int sockfd);
-Timer *get_timer_pid(pid_t pid);
+Timer get_timer_pid(pid_t pid);
 #endif // !CLIENT_H__
