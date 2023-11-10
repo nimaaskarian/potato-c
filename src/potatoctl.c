@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "../include/signal.h"
+#include "../config.h"
 #include "../include/client.h"
 #include "../include/timer.h"
 
@@ -44,6 +44,21 @@ void get_seconds(char *pid_str, int index)
 {
   printf("%d\n", send_socket_request_return_num(REQ_SECONDS,atoi(pid_str)));
 }
+void get_timer_each_second(char *pid_str, int index)
+{
+  Timer timer;
+  while (1) {
+    timer = get_timer_pid(atoi(pid_str));
+    if (timer.type == NULL_TYPE)
+      break;
+
+    Timer_print_before_time(timer);
+    Timer_print(&timer);
+    printf("%s%d",BEFORE_POMODORO_COUNT_STRING ,timer.pomodoro_count);
+    puts("");
+    sleep(1);
+  }
+}
 
 void list_all_timers()
 {
@@ -75,8 +90,7 @@ int main(int argc, char *argv[])
       case_index('I', handle_increase_pomodoro_count);
       case_index('D', handle_decrease_pomodoro_count);
       case_index('r', handle_reset_pomodoro);
-      case_index('T', get_type);
-      case_index('S', get_seconds);
+      case_index('T', get_timer_each_second);
     }
   }
   return EXIT_SUCCESS;

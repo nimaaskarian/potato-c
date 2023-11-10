@@ -32,4 +32,5 @@ char * Timer_time_left(Timer *timer);
 void Timer_pause(Timer * timer);
 void Timer_unpause(Timer * timer);
 void Timer_toggle_pause(Timer * timer);
+void Timer_print_before_time(Timer timer);
 #endif

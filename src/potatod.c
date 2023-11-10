@@ -110,26 +110,9 @@ void run_before_command_based_on_timertype(TimerType type)
   }
 }
 
-void print_before_time_based_on_timertype()
-{
-  switch (timer.type) {
-    case POMODORO_TYPE:
-      if (POMODORO_BEFORE_TIME_STRING != NULL)
-        printf("%s", POMODORO_BEFORE_TIME_STRING);
-    break;
-    case SHORT_BREAK_TYPE:
-      if (SHORT_BREAK_BEFORE_TIME_STRING != NULL)
-        printf("%s", SHORT_BREAK_BEFORE_TIME_STRING);
-    break;
-    case LONG_BREAK_TYPE:
-      if (LONG_BREAK_BEFORE_TIME_STRING != NULL)
-        printf("%s", LONG_BREAK_BEFORE_TIME_STRING);
-    break;
-  }
-}
 void print_all()
 {
-  print_before_time_based_on_timertype();
+  Timer_print_before_time(timer);
   Timer_print(&timer);
 
   if (app.print_pomodoro_count) 
@@ -176,6 +159,8 @@ void start_app_loop()
 
 void pause_timer_run_cmds() 
 {
+  if (!timer.paused)
+    return;
   Timer_pause(&timer);
   for (unsigned int i = 0; i < LENGTH(ON_PAUSE_COMMANDS); i++)
     (void)system(ON_PAUSE_COMMANDS[i]);
@@ -183,6 +168,8 @@ void pause_timer_run_cmds()
 
 void unpause_timer_run_cmds()
 {
+  if (!timer.paused)
+    return;
   Timer_unpause(&timer);
   for (unsigned int i = 0; i < LENGTH(ON_UNPAUSE_COMMANDS); i++)
     (void)system(ON_UNPAUSE_COMMANDS[i]);

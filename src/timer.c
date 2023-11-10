@@ -131,3 +131,21 @@ void Timer_print(Timer *restrict timer)
   }
 }
 
+void Timer_print_before_time(Timer timer)
+{
+  switch (timer.type) {
+    case POMODORO_TYPE:
+      if (POMODORO_BEFORE_TIME_STRING != NULL)
+        printf("%s", POMODORO_BEFORE_TIME_STRING);
+    break;
+    case SHORT_BREAK_TYPE:
+      if (SHORT_BREAK_BEFORE_TIME_STRING != NULL)
+        printf("%s", SHORT_BREAK_BEFORE_TIME_STRING);
+    break;
+    case LONG_BREAK_TYPE:
+      if (LONG_BREAK_BEFORE_TIME_STRING != NULL)
+        printf("%s", LONG_BREAK_BEFORE_TIME_STRING);
+    break;
+  }
+}
+
