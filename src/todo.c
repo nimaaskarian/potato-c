@@ -99,6 +99,20 @@ unsigned int Todo_array_read_from_file(Todo todos[])
   return output;
 }
 
+int min(int a, int b)
+{
+  if (b > a)
+    return a;
+  return b;
+}
+
+// void Todo_array_print_ncurses(Todo todos[], int size, int start)
+// {
+//   for (int i = start; i < size-start; i++) {
+//     int is_done_ch = todos[i].done ? 'x' : ' ';
+//     mvprintw(TODOS_START+i, 0,"[%c] [%d] %s\n", is_done_ch, todos[i].priority, todos[i].message);
+//   }
+// }
 void Todo_array_print_ncurses(Todo todos[], int size)
 {
   for (int i = 0; i < size; i++) {
