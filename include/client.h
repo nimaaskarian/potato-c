@@ -26,7 +26,7 @@ void run_function_on_pid_file_index(void(* handler)(char *, int index), int sele
 void run_function_on_pid_file_pid(void(* handler)(char *, int index), int selected_pid);
 int connect_socket(int port);
 int send_socket_request_return_num(SocketRequest req, int pid);
-unsigned int pids_length();
+unsigned int get_pids_length();
 pid_t pid_at_index(unsigned int selected_index);
 Timer * request_timer(pid_t pid);
 void remove_potato_pid_file(char *name, int index);

@@ -81,7 +81,7 @@ void run_function_on_pid_file_pid(void(* handler)(char *, int index), int select
   }
 }
 
-unsigned int pids_length()
+unsigned int get_pids_length()
 {
   DIR *dp;
   struct dirent *ep;

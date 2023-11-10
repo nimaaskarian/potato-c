@@ -13,4 +13,5 @@ void Todo_remove_array_index(Todo todos[], int *size, int index);
 unsigned int Todo_array_read_from_file(Todo todos[]);
 void ncurses_clear_todos(int todos_size);
 void Todo_array_write_to_file(Todo todos[], int todos_size);
+void Todo_initialize(Todo *todo);
 #endif // TODO_H__

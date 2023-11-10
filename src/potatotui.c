@@ -19,6 +19,7 @@ int handle_input_character_common(int ch)
     case 'q':
     case 'Q': 
       ncurses_quit();
+    break;
     case ESC:
       return 1;
     break;
@@ -31,14 +32,15 @@ void printw_pid(char *pid_str, int index)
   mvprintw(index, 0, "%s\n", pid_str);
 }
 
+int pids_length_global;
 void check_pids_length_and_set_selected(int *selected_index)
 {
   if (*selected_index < 0) {
-    *selected_index = pids_length()-1;
+    *selected_index = pids_length_global ? pids_length_global-1 : 0;
     return;
   }
 
-  if (*selected_index >= pids_length())  {
+  if (*selected_index >= pids_length_global)  {
     *selected_index = 0;
   }
 }
@@ -64,7 +66,7 @@ void handle_input_pid_menu(int ch, int *selected_index, pid_t * pid)
       run_function_on_pid_file_index(handle_quit, *selected_index);
       break;
     case 'G':
-      *selected_index = pids_length()-1;
+      *selected_index = pids_length_global-1;
       break;
     case '\n':
       *pid = pid_at_index(*selected_index);
@@ -72,7 +74,6 @@ void handle_input_pid_menu(int ch, int *selected_index, pid_t * pid)
   }
 }
 
-int pids_length_global;
 void draw_pids(int selected_index)
 {
   erase();
@@ -86,10 +87,10 @@ void draw_pids(int selected_index)
   }
 }
 
-void * pids_length_thread(void* args)
+void * get_pids_length_sleep(void* args)
 {
   while (1) {
-    pids_length_global = pids_length();
+    pids_length_global = get_pids_length();
     sleep(2);
   }
   pthread_exit(EXIT_SUCCESS);
@@ -97,8 +98,8 @@ void * pids_length_thread(void* args)
 
 pid_t pid_selection_menu(int *selected_index)
 {
-  pthread_t thread2;
-  pthread_create(&thread2, NULL, pids_length_thread, NULL);
+  pthread_t get_pids_thread;
+  pthread_create(&get_pids_thread, NULL, get_pids_length_sleep, NULL);
 
   pid_t output = -1;
   draw_pids(*selected_index);
@@ -113,12 +114,21 @@ pid_t pid_selection_menu(int *selected_index)
     draw_pids(*selected_index);
     napms(1000 / 60);
   }
-  pthread_cancel(thread2);
+  pthread_cancel(get_pids_thread);
   return output;
 }
 
 pid_t pid;
 _Bool timer_thread_paused = 0;
+void pause_timer_thread()
+{
+  timer_thread_paused = 1;
+}
+
+void unpause_timer_thread()
+{
+  timer_thread_paused = 0;
+}
 
 const char * type_string(TimerType type)
 {
@@ -146,31 +156,24 @@ Todo get_todo_from_user()
 {
   char str[100];
   Todo todo;
-  todo.priority = -1;
-  todo.file_index = -1;
-  timer_thread_paused = 1;
-  nodelay(stdscr, FALSE);
-  echo();
+  Todo_initialize(&todo);
+  enable_delay_and_echo();
+  pause_timer_thread();
 
-  mvprintw(getmaxy(stdscr)-1, 0, "Todo message: ");
+  mvprintw(MAX_Y, 0, "Todo message: ");
   getstr(str);
   strcpy(todo.message, str);
+  clear_line(MAX_Y);
 
-  move(getmaxy(stdscr)-1, 0);
-  clrtoeol();
   while (todo.priority < 0 || todo.priority > 9){
     mvprintw(getmaxy(stdscr)-1, 0, "Todo priority [0]: ");
     getstr(str);
     todo.priority = atoi(str);
   }
+  clear_line(MAX_Y);
 
-  noecho();
-  timer_thread_paused = 0;
-  nodelay(stdscr, TRUE);
-
-  move(getmaxy(stdscr)-1, 0);
-  clrtoeol();
-  todo.done = FALSE;
+  disable_delay_and_echo();
+  unpause_timer_thread();
 
   return todo;
 }
@@ -251,8 +254,8 @@ void handle_input_todos_menu(int ch, int *selected_index, int *todos_size, Todo 
   }
 }
 
-Timer *timer = NULL;
-void *timer_thread(void *arg) {
+void *get_and_print_timer(void *arg) {
+  Timer *timer = NULL;
   while (1) {
     if (pid)
       timer = get_timer_pid(pid);
@@ -311,6 +314,7 @@ void handle_input_timer(int ch)
 #define MAX_TODOS 40
 void start_timer_loop_on_thread()
 {
+  erase();
   mvprintw(TODOS_START-1, 0,"Todos:");
   Todo todos[MAX_TODOS];
   int todos_size = Todo_array_read_from_file(todos);
@@ -321,27 +325,26 @@ void start_timer_loop_on_thread()
 
   while(timer_thread_paused == 0) {
     int ch = getch();
+    handle_input_timer(ch);
+
     if (handle_input_character_common(ch)) {
       if (todos_changed) {
         timer_thread_paused = 1;
-        nodelay(stdscr, FALSE);
-        echo();
+        enable_delay_and_echo();
         mvprintw(getmaxy(stdscr)-1, 0,"Todo changes are not saved. Save? [Y/n]: ");
         char ch = getch();
         if (ch != 'n') {
-          handle_input_todos_menu('w', &selected_index, &todos_size, todos);
+          Todo_array_write_to_file(todos, todos_size);
         }
-
         timer_thread_paused = 0;
-        nodelay(stdscr, TRUE);
-        noecho();
+        disable_delay_and_echo();
       }
+      mvprintw(12,0, "HELLO");
       break;
     }
     int prior_selected_index = selected_index;
     handle_input_todos_menu(ch, &selected_index, &todos_size, todos);
 
-    handle_input_timer(ch);
 
     if (prior_selected_index != selected_index) {
       change_color_line(TODOS_START+selected_index, 1);
@@ -353,8 +356,8 @@ void start_timer_loop_on_thread()
 
 int main(int argc, char *argv[])
 {
-  pthread_t thread1;
-  pthread_create(&thread1, NULL, timer_thread, NULL);
+  pthread_t timer_thread;
+  pthread_create(&timer_thread, NULL, get_and_print_timer, NULL);
   initialize_screen();
   int selected_index = 0;
   while (1) {

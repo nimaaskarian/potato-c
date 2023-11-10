@@ -18,14 +18,14 @@ void initialize_screen()
   // printf("\033[?1003h\n");
   /* User input imediatly avaiable */
   // mouseinterval(0);
-  raw();
+  // raw();
   cbreak();
   /* Invisible cursor */
   curs_set(0);
   /* Non-blocking getch */
   nodelay(stdscr, TRUE);
   /* Enable keypad */
-  keypad(stdscr, TRUE);
+  // keypad(stdscr, TRUE);
 
 }
 
@@ -40,4 +40,31 @@ void ncurses_quit()
 {
   endwin();
   exit(EXIT_SUCCESS);
+}
+
+void clear_lines_from_to(int from, int to)
+{
+  for (int i = from; i < to; i++) {
+    clear_line(i);
+  }
+}
+
+void clear_line(int y)
+{
+  move(y, 0);
+  clrtoeol();
+}
+
+void enable_delay_and_echo()
+{
+  nodelay(stdscr, FALSE);
+  curs_set(1);
+  echo();
+}
+
+void disable_delay_and_echo()
+{
+  nodelay(stdscr, TRUE);
+  curs_set(0);
+  noecho();
 }
