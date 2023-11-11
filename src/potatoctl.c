@@ -56,6 +56,7 @@ void get_timer_each_second(char *pid_str, int index)
     Timer_print(&timer);
     printf("%s%d",BEFORE_POMODORO_COUNT_STRING ,timer.pomodoro_count);
     puts("");
+    fflush(stdout);
     sleep(1);
   }
 }

@@ -73,6 +73,8 @@ unsigned int Todo_array_read_from_file(Todo todos[])
   int index = 0;
   while ((read = getline(&line, &len, fp)) != -1) {
     char is_enabled;
+    strcpy(note, "");
+    strcpy(todo, "");
     int scan_count = sscanf(line,"[%c]>%s %[^\n]",&is_enabled, note, todo);
     if (!strlen(todo)) {
       sscanf(line,"[%c] %[^\n]",&is_enabled, todo);
@@ -87,8 +89,6 @@ unsigned int Todo_array_read_from_file(Todo todos[])
       todos[output].file_index = index;
       output++;
     }
-    strcpy(note, "");
-    strcpy(todo, "");
     index++;
   }
   free(note);

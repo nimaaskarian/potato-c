@@ -29,8 +29,9 @@ void Timer_toggle_pause(Timer *restrict timer)
 // This method has been designed in a way to just be 
 // put inside a loop and just work for you as your timer.
 // You can use `Timer_print_time_left` function afterwards
-void Timer_reduce_second_sleep(Timer *restrict timer)
+void Timer_sleep_reduce_second(Timer *restrict timer)
 {
+  sleep(1);
   if (!timer->paused) {
     timer->seconds--;
   }
@@ -38,7 +39,6 @@ void Timer_reduce_second_sleep(Timer *restrict timer)
     Timer_cycle_type(timer);
     Timer_set_seconds_based_on_type(timer);
   }
-  sleep(1);
 }
 
 void Timer_set_seconds_based_on_type(Timer *restrict timer)

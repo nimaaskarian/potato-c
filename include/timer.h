@@ -23,7 +23,7 @@ typedef struct {
   unsigned int pomodoro_count;
 } Timer;
 
-void Timer_reduce_second_sleep(Timer * timer);
+void Timer_sleep_reduce_second(Timer *timer);
 void Timer_set_seconds_based_on_type(Timer * timer);
 void Timer_cycle_type(Timer * timer);
 void Timer_initialize(Timer *timer);

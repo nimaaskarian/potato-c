@@ -153,13 +153,13 @@ void start_app_loop()
     if (!timer.paused) {
       print_all();
     }
-    Timer_reduce_second_sleep(&timer);
+    Timer_sleep_reduce_second(&timer);
   }
 }
 
 void pause_timer_run_cmds() 
 {
-  if (!timer.paused)
+  if (timer.paused)
     return;
   Timer_pause(&timer);
   for (unsigned int i = 0; i < LENGTH(ON_PAUSE_COMMANDS); i++)
