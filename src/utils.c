@@ -15,11 +15,11 @@ void send_notification(char *title, char *description)
   const char *command[max_command_length];
 
   if (title == NULL)
-    PRINTF_TO_COMMAND"'' '%s'",getpid(), description);
+    PRINTF_TO_COMMAND"'' '%s' &> /dev/null &disown",getpid(), description);
   else if (description == NULL)
-    PRINTF_TO_COMMAND"'%s' ''",getpid(), title);
+    PRINTF_TO_COMMAND"'%s' '' &> /dev/null &disown",getpid(), title);
   else
-    PRINTF_TO_COMMAND"'%s' '%s'",getpid(), title, description);
+    PRINTF_TO_COMMAND"'%s' '%s' &> /dev/null &disown",getpid(), title, description);
 
   (void)system((char*) command);
 }
