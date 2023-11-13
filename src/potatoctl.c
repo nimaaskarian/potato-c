@@ -44,6 +44,19 @@ void get_seconds(char *pid_str, int index)
 {
   printf("%d\n", send_socket_request_return_num(REQ_SECONDS,atoi(pid_str)));
 }
+void get_timer_one_time(char *pid_str, int index)
+{
+  Timer timer;
+  timer = get_timer_pid(atoi(pid_str));
+  if (timer.type == NULL_TYPE)
+    return;
+
+  Timer_print_before_time(timer);
+  Timer_print(&timer);
+  printf("%s%d",BEFORE_POMODORO_COUNT_STRING ,timer.pomodoro_count);
+  puts("");
+  fflush(stdout);
+}
 void get_timer_each_second(char *pid_str, int index)
 {
   Timer timer;
@@ -74,7 +87,7 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
   }
   int ch;
-  while ((ch = getopt(argc, argv, "T::S::c::lu::L::s::p::t::q::d::i::I::D::r::")) != -1) {
+  while ((ch = getopt(argc, argv, "1::T::S::c::lu::L::s::p::t::q::d::i::I::D::r::")) != -1) {
     switch (ch) {
       case 'l': 
         list_all_timers();
@@ -92,6 +105,7 @@ int main(int argc, char *argv[])
       case_index('D', handle_decrease_pomodoro_count);
       case_index('r', handle_reset_pomodoro);
       case_index('T', get_timer_each_second);
+      case_index('1', get_timer_one_time);
     }
   }
   return EXIT_SUCCESS;
