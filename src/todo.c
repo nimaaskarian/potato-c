@@ -68,8 +68,8 @@ unsigned int Todo_array_read_from_file(Todo todos[])
   fp = fopen(Todo_file_path(),"r");
   if (fp == NULL)
     return output;
-  char * note = malloc(4096*sizeof(char));
-  char * todo = malloc(4096*sizeof(char));
+  char note[4096];
+  char todo[4096];
   int index = 0;
   while ((read = getline(&line, &len, fp)) != -1) {
     char is_enabled;
@@ -91,8 +91,6 @@ unsigned int Todo_array_read_from_file(Todo todos[])
     }
     index++;
   }
-  free(note);
-  free(todo);
 
   Todo_array_bubble_sort_priority(todos, output);
 
@@ -196,4 +194,18 @@ void Todo_initialize(Todo *todo)
   todo->priority = -1;
   todo->file_index = -1;
   todo->done = 0;
+}
+
+_Bool Todo_is_equal(Todo t1, Todo t2)
+{
+  return t1.priority == t2.priority && t1.file_index == t2.file_index && strcmp(t1.message, t2.message) == 0;
+}
+
+unsigned int Todo_array_find_index(Todo todo_array[], int size, Todo search)
+{
+  for (int i = 0; i < size; i++) {
+    if (Todo_is_equal(todo_array[i], search))
+      return i;
+  }
+  return -1;
 }
