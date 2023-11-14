@@ -243,13 +243,13 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
         break;
       }
     case 'a': {
-      todos[*nc_todos_size] = get_todo_from_user(0);
-      if (!strlen(todos[*nc_todos_size].message))
+      todos[*real_todos_size] = get_todo_from_user(0);
+      if (!strlen(todos[*real_todos_size].message))
         break;
       todos_changed = TRUE;
-      (*nc_todos_size)++;
-      Todo_array_bubble_sort_priority(todos, *nc_todos_size);
-      Todo_array_print_ncurses(todos, *nc_todos_size);
+      (*real_todos_size)++;
+      Todo_array_bubble_sort_priority(todos, *real_todos_size);
+      Todo_array_print_ncurses(todos, *real_todos_size);
       ncurses_change_color_line(TODOS_START+*selected_index, 1);
       break;
     }
@@ -271,7 +271,8 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
     }
     case 'd':
       ncurses_clear_todos(*nc_todos_size);
-      Todo_remove_array_index(todos,nc_todos_size, *selected_index);
+      Todo_remove_array_index(todos,real_todos_size, *selected_index);
+      *nc_todos_size = get_todos_scroll_size(*real_todos_size);
       Todo_array_print_ncurses(todos, *nc_todos_size);
       fix_selected_index_and_highlight(selected_index, *nc_todos_size);
     break;
@@ -318,6 +319,7 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
       *selected_index = 0;
     break;
   }
+  *nc_todos_size = get_todos_scroll_size(*real_todos_size);
   if (*selected_index >= *nc_todos_size)
     *selected_index = 0;
   if (*selected_index < 0) {
