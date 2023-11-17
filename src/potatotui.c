@@ -12,7 +12,6 @@
 #include "../include/todo.h"
 #include "../include/ncurses-utils.h"
 
-#define ESC 27
 int handle_input_character_common(int ch)
 {
   switch (ch) {
@@ -146,6 +145,8 @@ const char * type_string(TimerType type)
       return "Short break";
     case LONG_BREAK_TYPE:
       return "Long break";
+    case NULL_TYPE:
+      return "";
   }
 }
 
@@ -157,34 +158,47 @@ void fix_selected_index_and_highlight(int * selected_index, int todos_size)
   ncurses_change_color_line(TODOS_START+*selected_index, 1);
 }
 
-_Bool todos_changed = FALSE;
-Todo get_todo_from_user(int defaultPriority)
+_Bool todos_changed;
+void set_todos_changed(_Bool input)
 {
-  #define MAX_TODO 100
-  char str[MAX_TODO];
-  Todo todo;
-  Todo_initialize(&todo);
+  todos_changed = input;
+  if (input)
+    mvprintw(TODOS_START-1, 0,"Todos *:");
+  else
+  {
+    ncurses_clear_line(TODOS_START-1);
+    mvprintw(TODOS_START-1, 0,"Todos:");
+  }
+}
+
+Todo get_todo_from_user(Todo * defaultTodoPtr)
+{
+  Todo todo, defaultTodo;
+  if (defaultTodoPtr == NULL)
+    Todo_initialize(&defaultTodo);
+  else
+    defaultTodo = *defaultTodoPtr;
   ncurses_ready_for_input();
   pause_timer_thread();
 
   mvprintw(MAX_Y, 0, "Todo message: ");
   
-  getnstr(str, MAX_TODO);
-  if (strlen(str))
-    strcpy(todo.message, str);
+  ncurses_getn_default_str(todo.message, defaultTodo.message, MAX_MESSAGE);
   ncurses_clear_line(MAX_Y);
 
-  if (strlen(str))
-    while (todo.priority < 0 || todo.priority > 9){
-      mvprintw(MAX_Y, 0, "Todo priority [0]: ");
+  if (strlen(todo.message))
+    do {
+      mvprintw(MAX_Y, 0, "Todo priority [%d]: ", defaultTodo.priority);
       clrtoeol();
-      getnstr(str, 2);
-      if (!strlen(str)) {
-        todo.priority = defaultPriority;
-        break;
-      }
-      todo.priority = atoi(str);
+      char priority_str[2];
+      ncurses_getn_default_str(priority_str, "", 2);
+      if (!strlen(priority_str))
+        todo.priority = defaultTodo.priority;
+      else
+        todo.priority = atoi(priority_str);
     }
+    while (todo.priority < 0 || todo.priority > 9);
+
   ncurses_clear_line(MAX_Y);
 
   ncurses_unready_for_input();
@@ -243,10 +257,10 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
         break;
       }
     case 'a': {
-      todos[*real_todos_size] = get_todo_from_user(0);
+      todos[*real_todos_size] = get_todo_from_user(NULL);
       if (!strlen(todos[*real_todos_size].message))
         break;
-      todos_changed = TRUE;
+      set_todos_changed(TRUE);
       (*real_todos_size)++;
       Todo_array_bubble_sort_priority(todos, *real_todos_size);
       Todo_array_print_ncurses(todos, *real_todos_size);
@@ -254,10 +268,10 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
       break;
     }
     case 'e': {
-      Todo todo = get_todo_from_user(todos[*selected_index].priority);
+      Todo todo = get_todo_from_user(&todos[*selected_index]);
       if (!strlen(todo.message))
         break;
-      todos_changed = TRUE;
+      set_todos_changed(TRUE);
       strcpy(todo.note, todos[*selected_index].note);
 
       if (!strlen(todo.message))
@@ -279,6 +293,7 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
     case '\n':
       if (*nc_todos_size == 0)
         break;
+      set_todos_changed(TRUE);
       attron(COLOR_PAIR(1));
       todos[*selected_index].done = !todos[*selected_index].done;
       if (todos[*selected_index].done)
@@ -290,7 +305,7 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
       (*selected_index)++;
     break;
     case 'R':
-      todos_changed = FALSE;
+      set_todos_changed(FALSE);
       ncurses_clear_lines_from_to(TODOS_START, TODOS_START+*nc_todos_size);
       *real_todos_size = Todo_array_read_from_file(todos);
       *nc_todos_size = get_todos_scroll_size(*real_todos_size);
@@ -301,7 +316,7 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
       ncurses_sleep_and_clear_line(2, MAX_Y);
     break;
     case 'w':
-      todos_changed = FALSE;
+      set_todos_changed(FALSE);
       Todo_array_write_to_file(todos, *real_todos_size);
       ncurses_clear_todos(*nc_todos_size);
       *real_todos_size = Todo_array_read_from_file(todos);
@@ -309,8 +324,9 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
       Todo_array_print_ncurses(todos, *nc_todos_size);
       mvprintw(MAX_Y, 0, "Wrote to file");
       fix_selected_index_and_highlight(selected_index, *nc_todos_size);
-      refresh();
-      ncurses_sleep_and_clear_line(2, MAX_Y);
+    break;
+    case ':':
+      ncurses_clear_line(MAX_Y);
     break;
     case 'G':
       *selected_index = *nc_todos_size-1 < 0 ? 0 : *nc_todos_size-1;
@@ -388,7 +404,7 @@ void start_timer_loop_on_thread()
   pthread_t timer_thread;
   pthread_create(&timer_thread, NULL, get_and_print_timer, NULL);
 
-  mvprintw(TODOS_START-1, 0,"Todos:");
+  set_todos_changed(FALSE);
   Todo todos[MAX_TODOS];
   int real_todos_size = Todo_array_read_from_file(todos);
   int todos_size = get_todos_scroll_size(real_todos_size);

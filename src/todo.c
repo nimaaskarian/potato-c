@@ -1,3 +1,4 @@
+#include <linux/limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
@@ -12,8 +13,8 @@
 char * Todo_file_path()
 {
   const char* home = getenv("HOME");
-  char *todo_path = malloc(4096*sizeof(char));
-  snprintf(todo_path, 4096, "%s/.local/share/calcurse/todo", home);
+  char *todo_path = malloc(PATH_MAX*sizeof(char));
+  snprintf(todo_path, PATH_MAX, "%s/.local/share/calcurse/todo", home);
 
   return todo_path;
 }
@@ -95,13 +96,6 @@ unsigned int Todo_array_read_from_file(Todo todos[])
   Todo_array_bubble_sort_priority(todos, output);
 
   return output;
-}
-
-int min(int a, int b)
-{
-  if (b > a)
-    return a;
-  return b;
 }
 
 // void Todo_array_print_ncurses(Todo todos[], int size, int start)

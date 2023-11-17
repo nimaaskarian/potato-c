@@ -1,8 +1,10 @@
 #ifndef TODO_H__
 #define TODOS_START 5
+#define MAX_MESSAGE 4096
+#define MAX_NOTE 4096
 typedef struct {
   int file_index, priority;
-  char note[4096], message[4096];
+  char note[MAX_NOTE], message[MAX_MESSAGE];
   _Bool done;
 } Todo;
 void Todo_array_bubble_sort_priority(Todo todos[], int size);

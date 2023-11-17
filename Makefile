@@ -44,9 +44,9 @@ test:
 
 install: all install_options
 	mkdir -p ${DESTDIR}${PREFIX}/bin
-	cp ${BIN_DIR}/${D_NAME} ${DESTDIR}${PREFIX}/bin
-	cp ${BIN_DIR}/${CTL_NAME} ${DESTDIR}${PREFIX}/bin
-	cp ${BIN_DIR}/${TUI_NAME} ${DESTDIR}${PREFIX}/bin
+	cp -f ${BIN_DIR}/${D_NAME} ${DESTDIR}${PREFIX}/bin
+	cp -f ${BIN_DIR}/${CTL_NAME} ${DESTDIR}${PREFIX}/bin
+	cp -f ${BIN_DIR}/${TUI_NAME} ${DESTDIR}${PREFIX}/bin
 
 ${DEB_DIR}/${TESTS_NAME}: ${OBJ_TESTS}
 	mkdir -p ${DEB_DIR}

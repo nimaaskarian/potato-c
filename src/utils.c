@@ -2,8 +2,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "utils.h"
+#include "../include/utils.h"
 
+int min(int a, int b)
+{
+  if (b > a)
+    return a;
+  return b;
+}
 
 void send_notification(char *title, char *description)
 {
