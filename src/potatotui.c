@@ -183,21 +183,26 @@ Todo get_todo_from_user(Todo * defaultTodoPtr)
 
   mvprintw(MAX_Y, 0, "Todo message: ");
   
-  ncurses_getn_default_str(todo.message, defaultTodo.message, MAX_MESSAGE);
+  int status = ncurses_getnstr_default_vimode(todo.message, MAX_MESSAGE, defaultTodo.message);
   ncurses_clear_line(MAX_Y);
 
-  if (strlen(todo.message))
+  if (strlen(todo.message) && status == EXIT_SUCCESS) {
     do {
       mvprintw(MAX_Y, 0, "Todo priority [%d]: ", defaultTodo.priority);
       clrtoeol();
       char priority_str[2];
-      ncurses_getn_default_str(priority_str, "", 2);
+      ncurses_getnstr_default_vimode(priority_str, 2, "");
       if (!strlen(priority_str))
         todo.priority = defaultTodo.priority;
       else
         todo.priority = atoi(priority_str);
-    }
+      }
     while (todo.priority < 0 || todo.priority > 9);
+  } else {
+    todo.priority = defaultTodo.priority;
+  }
+  todo.done = defaultTodo.done;
+  todo.file_index = defaultTodo.file_index;
 
   ncurses_clear_line(MAX_Y);
 
