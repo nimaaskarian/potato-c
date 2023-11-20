@@ -145,18 +145,18 @@ typedef struct {
   int index;
   _Bool should_delete;
 } Delete;
-int ncurses_getnstr_default_vimode(char * src, const int tmp_max ,char * def)
+int ncurses_getnstr_default_vimode(char * src, const int max_size ,char * def)
 {
   #define MODE_INDEX 4
   printw("(I): ");
   const unsigned int start_x = getcurx(stdscr);
   const unsigned int start_y = getcury(stdscr);
-  int def_len = min(strlen(def), tmp_max), tmp_size = def_len;
+  int def_size = min(strlen(def), max_size), tmp_size = def_size;
   int index = tmp_size;
-  printw("%.*s", def_len, def);
-  char tmp[tmp_max+1];
-  strncpy(tmp, def, def_len);
-  tmp[tmp_max] = '\0';
+  printw("%.*s", def_size, def);
+  char tmp[max_size+1];
+  strncpy(tmp, def, def_size);
+  tmp[max_size] = '\0';
   Mode mode = INSERT;
   Mode last_mode = mode;
   Delete delete = {.index=-1, .should_delete=FALSE};
@@ -167,7 +167,7 @@ int ncurses_getnstr_default_vimode(char * src, const int tmp_max ,char * def)
       delete.should_delete = TRUE;
     int ch = getch();
     if (ch == '\n') {
-      strcpy(src,tmp);
+      strncpy(src,tmp, tmp_size);
       src[tmp_size] = '\0';
       return EXIT_SUCCESS;
     }
@@ -212,7 +212,7 @@ int ncurses_getnstr_default_vimode(char * src, const int tmp_max ,char * def)
         case KEY_DC:
         case 127:
           if (index > 0 && tmp_size > 0) {
-            str_remove_char_max(tmp, tmp_size, index-1, tmp_max);
+            str_remove_char_max(tmp, tmp_size, index-1, max_size);
             tmp_size--;
             index--;
             // delch();
@@ -227,7 +227,7 @@ int ncurses_getnstr_default_vimode(char * src, const int tmp_max ,char * def)
           mode = NORMAL;
           break;
         default:
-          if (tmp_size < tmp_max) {
+          if (tmp_size < max_size) {
             tmp_size++;
             str_n_at_i_appch(tmp, tmp_size, index, ch);
             update_string(tmp, tmp_size, start_y, start_x);
@@ -239,7 +239,9 @@ int ncurses_getnstr_default_vimode(char * src, const int tmp_max ,char * def)
     switch(ch) {
       case 'q':
       case ESC:
-        strncpy(src, def, def_len);
+        // mvprintw(3,0,"%d", def_size);
+        strncpy(src, def, def_size);
+        src[def_size] = '\0';
         return EXIT_FAILURE;
       case 'l':
         if (index < tmp_size-1)
@@ -249,7 +251,7 @@ int ncurses_getnstr_default_vimode(char * src, const int tmp_max ,char * def)
           delete.index = index;
         break;
       case 'x':
-        if (str_remove_char_max(tmp, tmp_size, index, tmp_max) == EXIT_SUCCESS) {
+        if (str_remove_char_max(tmp, tmp_size, index, max_size) == EXIT_SUCCESS) {
           tmp_size--;
           update_string(tmp, tmp_size, start_y, start_x);
         }
@@ -301,7 +303,7 @@ int ncurses_getnstr_default_vimode(char * src, const int tmp_max ,char * def)
         tmp_size = tmp_size-(index-delete.index);
         index=delete.index;
       }  else if (index == delete.index) {
-        if (str_remove_char_max(tmp,tmp_size,index,tmp_max) == EXIT_SUCCESS) {
+        if (str_remove_char_max(tmp,tmp_size,index,max_size) == EXIT_SUCCESS) {
           tmp_size--;
           index--;
         }

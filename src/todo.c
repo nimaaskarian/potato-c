@@ -185,7 +185,7 @@ void ncurses_clear_todos(int todos_size)
 
 void Todo_initialize(Todo *todo)
 {
-  todo->priority = -1;
+  todo->priority = 0;
   todo->file_index = -1;
   todo->done = 0;
 }
