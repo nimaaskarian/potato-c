@@ -8,6 +8,7 @@ typedef struct {
   _Bool done;
 } Todo;
 void Todo_array_bubble_sort_priority(Todo todos[], int size);
+void Todo_array_insertion_sort_priority(Todo todos[], int size);
 void Todo_array_print_ncurses(Todo todos[], int size);
 void Todo_swap(Todo *t1, Todo *t2);
 char * Todo_file_path();

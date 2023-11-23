@@ -50,6 +50,19 @@ void Todo_array_bubble_sort_priority(Todo todos[], int size)
   }
 }
 
+void Todo_array_insertion_sort_priority(Todo todos[], int size)
+{
+  for (int i = 1; i < size; i++) {
+    int j = i - 1;
+    Todo current = todos[i];
+    while (j >= 0 && (todos[j].priority == 0 || (current.priority != 0 && current.priority < todos[j].priority))) {
+      todos[j+1] = todos[j];
+      j--;
+    }
+    todos[j+1] = current;
+  }
+}
+
 
 void Todo_swap(Todo *t1, Todo *t2)
 {

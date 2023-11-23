@@ -240,7 +240,8 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
           todos[*selected_index].priority++;
 
         Todo current_todo = todos[*selected_index];
-        Todo_array_bubble_sort_priority(todos, *nc_todos_size);
+        Todo_array_insertion_sort_priority(todos, *nc_todos_size);
+        // Todo_array_bubble_sort_priority(todos, *nc_todos_size);
         *selected_index = Todo_array_find_index(todos, *nc_todos_size, current_todo);
         Todo_array_print_ncurses(todos, *nc_todos_size);
         ncurses_change_color_line(TODOS_START+*selected_index, 1);
@@ -255,7 +256,8 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
           todos[*selected_index].priority--;
           
         Todo current_todo = todos[*selected_index];
-        Todo_array_bubble_sort_priority(todos, *nc_todos_size);
+        Todo_array_insertion_sort_priority(todos, *nc_todos_size);
+        // Todo_array_bubble_sort_priority(todos, *nc_todos_size);
         *selected_index = Todo_array_find_index(todos, *nc_todos_size, current_todo);
         Todo_array_print_ncurses(todos, *nc_todos_size);
         ncurses_change_color_line(TODOS_START+*selected_index, 1);
@@ -267,7 +269,8 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
         break;
       set_todos_changed(TRUE);
       (*real_todos_size)++;
-      Todo_array_bubble_sort_priority(todos, *real_todos_size);
+      Todo_array_insertion_sort_priority(todos, *real_todos_size);
+      // Todo_array_bubble_sort_priority(todos, *real_todos_size);
       Todo_array_print_ncurses(todos, *real_todos_size);
       ncurses_change_color_line(TODOS_START+*selected_index, 1);
       break;
@@ -283,7 +286,8 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
         strcpy(todo.message, todos[*selected_index].message);
 
       todos[*selected_index] = todo;
-      Todo_array_bubble_sort_priority(todos, *nc_todos_size);
+      Todo_array_insertion_sort_priority(todos, *nc_todos_size);
+      // Todo_array_bubble_sort_priority(todos, *nc_todos_size);
       Todo_array_print_ncurses(todos, *nc_todos_size);
       ncurses_change_color_line(TODOS_START+*selected_index, 1);
       break;
