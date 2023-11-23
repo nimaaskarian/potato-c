@@ -136,7 +136,7 @@ void unpause_timer_thread()
   timer_thread_paused = 0;
 }
 
-const char * type_string(TimerType type)
+const char * get_type_string(TimerType type)
 {
   switch(type) {
     case POMODORO_TYPE:
@@ -171,7 +171,7 @@ void set_todos_changed(_Bool input)
   }
 }
 
-Todo get_todo_from_user(Todo * defaultTodoPtr)
+Todo get_todo_from_user(Todo * defaultTodoPtr, int * status_output)
 {
   Todo todo, defaultTodo;
   if (defaultTodoPtr == NULL)
@@ -184,6 +184,7 @@ Todo get_todo_from_user(Todo * defaultTodoPtr)
   mvprintw(MAX_Y, 0, "Todo message: ");
   
   int status = ncurses_getnstr_default_vimode(todo.message, MAX_MESSAGE, defaultTodo.message);
+  *status_output = status;
   ncurses_clear_line(MAX_Y);
 
   if (strlen(todo.message) && status == EXIT_SUCCESS) {
@@ -239,6 +240,7 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
         else
           todos[*selected_index].priority++;
 
+        set_todos_changed(TRUE);
         Todo current_todo = todos[*selected_index];
         Todo_array_insertion_sort_priority(todos, *nc_todos_size);
         // Todo_array_bubble_sort_priority(todos, *nc_todos_size);
@@ -255,6 +257,7 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
         else
           todos[*selected_index].priority--;
           
+        set_todos_changed(TRUE);
         Todo current_todo = todos[*selected_index];
         Todo_array_insertion_sort_priority(todos, *nc_todos_size);
         // Todo_array_bubble_sort_priority(todos, *nc_todos_size);
@@ -264,8 +267,9 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
         break;
       }
     case 'a': {
-      todos[*real_todos_size] = get_todo_from_user(NULL);
-      if (!strlen(todos[*real_todos_size].message))
+      int status;
+      todos[*real_todos_size] = get_todo_from_user(NULL, &status);
+      if (status != EXIT_SUCCESS)
         break;
       set_todos_changed(TRUE);
       (*real_todos_size)++;
@@ -276,8 +280,9 @@ void handle_input_todos_menu(int ch, int *selected_index, int *real_todos_size, 
       break;
     }
     case 'e': {
-      Todo todo = get_todo_from_user(&todos[*selected_index]);
-      if (!strlen(todo.message))
+      int status;
+      Todo todo = get_todo_from_user(&todos[*selected_index], &status);
+      if (status != EXIT_SUCCESS)
         break;
       set_todos_changed(TRUE);
       strcpy(todo.note, todos[*selected_index].note);
@@ -369,7 +374,8 @@ void *get_and_print_timer(void *arg) {
       char * time_left_str = Timer_time_left(&timer);
       mvprintw(0,0, "Time left: %s", time_left_str);
       mvprintw(1,0, "Pomodoros: %d", timer.pomodoro_count);
-      mvprintw(2,0, "Type: %s", type_string(timer.type));
+      const char * type_string = get_type_string(timer.type);
+      mvprintw(2,0, "Type: %s", type_string);
       free(time_left_str);
     }
     napms(1000/2);

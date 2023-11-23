@@ -12,9 +12,10 @@
 
 char * Todo_file_path()
 {
-  const char* home = getenv("HOME");
+  char* home = getenv("HOME");
   char *todo_path = malloc(PATH_MAX*sizeof(char));
   snprintf(todo_path, PATH_MAX, "%s/.local/share/calcurse/todo", home);
+  free(home);
 
   return todo_path;
 }
@@ -78,8 +79,9 @@ unsigned int Todo_array_read_from_file(Todo todos[])
   size_t len = 0;
   ssize_t read;
   unsigned int output = 0;
-
-  fp = fopen(Todo_file_path(),"r");
+  char * todo_file_path = Todo_file_path();
+  fp = fopen(todo_file_path,"r");
+  free(todo_file_path);
   if (fp == NULL)
     return output;
   char note[4096];
@@ -105,6 +107,7 @@ unsigned int Todo_array_read_from_file(Todo todos[])
     }
     index++;
   }
+  free(line);
 
   Todo_array_bubble_sort_priority(todos, output);
 
@@ -131,7 +134,8 @@ void Todo_array_write_to_file(Todo todos[], int todos_size)
 {
   FILE * fp_src;
   char line[MAX_CHAR];
-  fp_src = fopen(Todo_file_path(),"r");
+  char * todo_file_path = Todo_file_path();
+  fp_src = fopen(todo_file_path,"r");
   #define TMP_FILE "/tmp/potato-c-todos"
 
   FILE * fp_tmp = fopen(TMP_FILE, "w");
@@ -169,13 +173,14 @@ void Todo_array_write_to_file(Todo todos[], int todos_size)
   }
   fclose(fp_tmp);
   fclose(fp_src);
-  if (remove(Todo_file_path()) != 0) {
+  if (remove(todo_file_path) != 0) {
     perror("Error deleting the source file");
+    free(todo_file_path);
     return;
   }
 
-  if (rename(TMP_FILE, Todo_file_path()) != 0) {
-    FILE *fp_new_src = fopen(Todo_file_path(), "w");
+  if (rename(TMP_FILE, todo_file_path) != 0) {
+    FILE *fp_new_src = fopen(todo_file_path, "w");
     fp_tmp = fopen(TMP_FILE, "r");
     while (fgets(line, sizeof(line), fp_tmp)) {
         fprintf(fp_new_src, "%s", line);
@@ -183,8 +188,11 @@ void Todo_array_write_to_file(Todo todos[], int todos_size)
     fclose(fp_new_src);
     fclose(fp_tmp);
     remove(TMP_FILE);
+    free(todo_file_path);
     return;
   }
+
+  free(todo_file_path);
 
 }
 

@@ -85,7 +85,7 @@ unsigned int get_pids_length()
 {
   DIR *dp;
   struct dirent *ep;
-  dp = opendir (POTATO_PIDS_DIRECTORY);
+  dp = opendir(POTATO_PIDS_DIRECTORY);
 
   unsigned int output = 0;
   if (dp != NULL)
@@ -96,6 +96,7 @@ unsigned int get_pids_length()
       }
     }
   }
+  free(dp);
   return output;
 }
 
@@ -131,6 +132,7 @@ pid_t pid_at_index(unsigned int selected_index)
       }
     }
   }
+  free(dp);
   return output;
 }
 
@@ -171,6 +173,7 @@ char * send_req_return_str(SocketRequest req, int sockfd)
   snprintf(request, size, "%d",req);
 
   send(sockfd, request, size, 0);
+  free(request);
   int valread = read(sockfd, buffer, 1024 - 1);
   close(sockfd);
 
