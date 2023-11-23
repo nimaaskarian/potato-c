@@ -12,10 +12,9 @@
 
 char * Todo_file_path()
 {
-  char* home = getenv("HOME");
+  const char* home = getenv("HOME");
   char *todo_path = malloc(PATH_MAX*sizeof(char));
   snprintf(todo_path, PATH_MAX, "%s/.local/share/calcurse/todo", home);
-  free(home);
 
   return todo_path;
 }
