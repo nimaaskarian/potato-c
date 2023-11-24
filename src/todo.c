@@ -52,10 +52,11 @@ void Todo_array_bubble_sort_priority(Todo todos[], int size)
 
 void Todo_array_insertion_sort_priority(Todo todos[], int size)
 {
+  #define PRIORITY(x) (x.priority == 0 ? 10: x.priority)
   for (int i = 1; i < size; i++) {
     int j = i - 1;
     Todo current = todos[i];
-    while (j >= 0 && (todos[j].priority == 0 || (current.priority != 0 && current.priority < todos[j].priority))) {
+    while (j >= 0 && PRIORITY(current) < PRIORITY(todos[j])) {
       todos[j+1] = todos[j];
       j--;
     }
