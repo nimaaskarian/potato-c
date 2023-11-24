@@ -19,4 +19,5 @@ void Todo_array_write_to_file(Todo todos[], int todos_size);
 void Todo_initialize(Todo *todo);
 int min(int a, int b);
 unsigned int Todo_array_find_index(Todo todo_array[], int size, Todo search);
+int Todo_array_search(Todo haystack[], int size, char * needle, int * matching_indexes);
 #endif // TODO_H__

@@ -9,6 +9,7 @@
 #include <ncurses.h>
 
 #include "../include/todo.h"
+#include "../include/utils.h"
 
 char * Todo_file_path()
 {
@@ -25,6 +26,17 @@ void Todo_remove_array_index(Todo todos[], int *size, int index)
   for(i = index; i < *size; i++) todos[i] = todos[i + 1];
   if (*size)
     (*size)--;
+}
+
+int Todo_array_search(Todo haystack[], int size, char * needle, int matching_indexes[])
+{
+  int indexes_size = 0;
+  for (int i = 0; i < size; i++) {
+    if (strstr(strlwr(haystack[i].message), strlwr(needle)) != NULL) {
+      matching_indexes[indexes_size++] = i;
+    }
+  }
+  return indexes_size;
 }
 
 void Todo_array_bubble_sort_priority(Todo todos[], int size)

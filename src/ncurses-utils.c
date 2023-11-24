@@ -53,7 +53,6 @@ void ncurses_ready_for_input()
   nodelay(stdscr, FALSE);
   // keypad(stdscr, TRUE);
   curs_set(1);
-  echo();
 }
 
 void str_n_at_i_appch(char * src, int n,int app_index, char ch)
@@ -161,7 +160,6 @@ int ncurses_getnstr_default_vimode(char * src, const int max_size ,char * def)
   Mode last_mode = mode;
   Delete delete = {.index=-1, .should_delete=FALSE};
 
-  noecho();
   while (1) {
     if (delete.index != -1)
       delete.should_delete = TRUE;
