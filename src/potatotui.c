@@ -256,6 +256,13 @@ void handle_input_todos_menu(TodosMenuArgs *args)
                           search_term,args->searched_todos);
       if (args->searched_todos_size != 0) {
         args->searched_todos_index = 0;
+        while (args->searched_todos[args->searched_todos_index] < args->selected_index) {
+          if (args->searched_todos_index >= args->searched_todos_size) {
+            args->searched_todos_index = 0;
+            break;
+          }
+          args->searched_todos_index++;
+        }
         args->selected_index = args->searched_todos[args->searched_todos_index];
       } else {
         args->searched_todos_index = -1;
@@ -266,12 +273,19 @@ void handle_input_todos_menu(TodosMenuArgs *args)
       if (args->searched_todos_size == 0)
         break;
       args->searched_todos_index++;
-      if (args->searched_todos_index < args->searched_todos_size) {
-        args->selected_index = args->searched_todos[args->searched_todos_index];
-      } else {
+      if (args->searched_todos_index >= args->searched_todos_size) {
         args->searched_todos_index = 0;
-        args->selected_index = args->searched_todos[args->searched_todos_index];
       }
+      args->selected_index = args->searched_todos[args->searched_todos_index];
+    break;
+    case 'N':
+      if (args->searched_todos_size == 0)
+        break;
+      args->searched_todos_index--;
+      if (args->searched_todos_index < 0) {
+        args->searched_todos_index = args->searched_todos_size-1;
+      }
+      args->selected_index = args->searched_todos[args->searched_todos_index];
     break;
     case 'J': {
         if (args->todos[args->selected_index].priority == 0)
