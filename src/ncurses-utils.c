@@ -245,6 +245,12 @@ int ncurses_getnstr_default_vimode(char * src, const int max_size ,char * def)
         if (index < tmp_size-1)
           index++;
         break;
+      case '~':
+        tmp[index] = toggle_lower(tmp[index]);
+        update_string(tmp, tmp_size, start_y, start_x);
+        if (index < tmp_size)
+          index++;
+      break;
       case 'd':
           delete.index = index;
         break;

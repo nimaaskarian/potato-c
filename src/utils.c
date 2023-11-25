@@ -18,6 +18,14 @@ char *strlwr(char *str)
   return str;
 }
 
+char toggle_lower(char ch)
+{
+  if (islower(ch))
+    return toupper(ch);
+  else
+    return tolower(ch);
+}
+
 int min(int a, int b)
 {
   if (b > a)

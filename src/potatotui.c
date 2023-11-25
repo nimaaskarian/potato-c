@@ -483,6 +483,7 @@ void start_timer_loop_on_thread()
   // int nc_todos_size = get_todos_scroll_size(real_todos_size);
   todo_menu_args.real_todos_size = Todo_array_read_from_file(todo_menu_args.todos);
   todo_menu_args.nc_todos_size = get_todos_scroll_size(todo_menu_args.real_todos_size);;
+  todo_menu_args.searched_todos_size = 0;
 
   Todo_array_print_ncurses(todo_menu_args.todos, todo_menu_args.nc_todos_size);
 
