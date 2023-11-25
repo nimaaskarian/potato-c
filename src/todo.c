@@ -32,7 +32,7 @@ int Todo_array_search(Todo haystack[], int size, char * needle, int matching_ind
 {
   int indexes_size = 0;
   for (int i = 0; i < size; i++) {
-    if (strstr(strlwr(haystack[i].message), strlwr(needle)) != NULL) {
+    if (strcasestr(haystack[i].message, needle) != NULL) {
       matching_indexes[indexes_size++] = i;
     }
   }
