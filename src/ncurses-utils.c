@@ -143,7 +143,15 @@ int str_remove_char_max(char * str, int size, int index, int max)
 typedef struct {
   int index;
   _Bool should_delete;
+  Mode mode_after;
 } Delete;
+
+void Delete_initialize(Delete * delete)
+{
+  delete->index = -1;
+  delete->should_delete = FALSE;
+  delete->mode_after = NORMAL;
+}
 int ncurses_getnstr_default_vimode(char * src, const int max_size ,char * def)
 {
   #define MODE_INDEX 4
@@ -162,7 +170,8 @@ int ncurses_getnstr_default_vimode(char * src, const int max_size ,char * def)
   tmp[max_size] = '\0';
   Mode mode = INSERT;
   Mode last_mode = mode;
-  Delete delete = {.index=-1, .should_delete=FALSE};
+  Delete delete;
+  Delete_initialize(&delete);
 
   while (1) {
     if (delete.index != -1)
@@ -256,8 +265,18 @@ int ncurses_getnstr_default_vimode(char * src, const int max_size ,char * def)
         if (index < tmp_size)
           index++;
       break;
+      case 'c':
+          delete.mode_after = INSERT;
       case 'd':
           delete.index = index;
+        break;
+      case 'C':
+        delete.mode_after = INSERT;
+      case 'D':
+          delete.index = index;
+          while (index < tmp_size)
+            index++;
+          delete.should_delete = TRUE;
         break;
       case 'x':
         if (str_remove_char_max(tmp, tmp_size, index, max_size) == EXIT_SUCCESS) {
@@ -321,8 +340,8 @@ int ncurses_getnstr_default_vimode(char * src, const int max_size ,char * def)
         tmp_size = tmp_size-(delete.index-index);
       }
       update_string(tmp, tmp_size, start_y, start_x);
-      delete.index = -1;
-      delete.should_delete = FALSE;
+      mode = delete.mode_after;
+      Delete_initialize(&delete);
     }
     if (last_mode != mode) {
       if (mode == INSERT)
