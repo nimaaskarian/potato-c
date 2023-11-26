@@ -128,8 +128,8 @@ void update_string(char * str, int size, int start_y, int start_x)
 {
   move(start_y,start_x);
   clrtoeol();
-  refresh();
   printw("%.*s", size, str);
+  refresh();
 }
 
 int str_remove_char_max(char * str, int size, int index, int max)
@@ -150,11 +150,15 @@ int ncurses_getnstr_default_vimode(char * src, const int max_size ,char * def)
   printw("(I): ");
   const unsigned int start_x = getcurx(stdscr);
   const unsigned int start_y = getcury(stdscr);
-  int def_size = min(strlen(def), max_size), tmp_size = def_size;
-  int index = tmp_size;
-  printw("%.*s", def_size, def);
+  int def_size = 0;
   char tmp[max_size+1];
-  strncpy(tmp, def, def_size);
+  if (def != NULL) {
+    def_size = min(strlen(def), max_size);
+    printw("%.*s", def_size, def);
+    strncpy(tmp, def, def_size);
+  }
+  int tmp_size = def_size;
+  int index = tmp_size;
   tmp[max_size] = '\0';
   Mode mode = INSERT;
   Mode last_mode = mode;
@@ -238,7 +242,8 @@ int ncurses_getnstr_default_vimode(char * src, const int max_size ,char * def)
       case 'q':
       case ESC:
         // mvprintw(3,0,"%d", def_size);
-        strncpy(src, def, def_size);
+        if (def != NULL)
+          strncpy(src, def, def_size);
         src[def_size] = '\0';
         return EXIT_FAILURE;
       case 'l':
@@ -328,7 +333,7 @@ int ncurses_getnstr_default_vimode(char * src, const int max_size ,char * def)
     }
 
     move(start_y, start_x+index);
-    refresh();
+    // refresh();
     // printw("%d, %d", index, start_x);
   }
   return EXIT_SUCCESS;
