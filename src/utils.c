@@ -1,10 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 
 #include "../include/utils.h"
+
+void recursive_mkdir(char *path)
+{
+    char *sep = strrchr(path, '/');
+    if(sep != NULL) {
+      *sep = 0;
+      recursive_mkdir(path);
+      *sep = '/';
+    }
+    mkdir(path, 0700);
+}
 
 char *strlwr(char *str)
 {

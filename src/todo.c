@@ -1,5 +1,6 @@
 #include <linux/limits.h>
 #include <math.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -14,8 +15,22 @@
 char * Todo_file_path()
 {
   const char* home = getenv("HOME");
+  char *todo_dir = malloc(PATH_MAX*sizeof(char));
+  snprintf(todo_dir, PATH_MAX, "%s/.local/share/calcurse", home);
   char *todo_path = malloc(PATH_MAX*sizeof(char));
-  snprintf(todo_path, PATH_MAX, "%s/.local/share/calcurse/todo", home);
+  snprintf(todo_path, PATH_MAX, "%s/todo", todo_dir);
+
+  struct stat st = {0};
+  if (stat(todo_dir, &st) == -1) {
+    recursive_mkdir(todo_dir);
+  }
+  free(todo_dir);
+
+  if (stat(todo_path, &st) == -1) {
+    FILE *fptr;
+    fptr = fopen(todo_path, "w");
+    fclose(fptr);
+  }
 
   return todo_path;
 }
@@ -195,7 +210,7 @@ void Todo_array_write_to_file(Todo todos[], int todos_size)
     FILE *fp_new_src = fopen(todo_file_path, "w");
     fp_tmp = fopen(TMP_FILE, "r");
     while (fgets(line, sizeof(line), fp_tmp)) {
-        fprintf(fp_new_src, "%s", line);
+      fprintf(fp_new_src, "%s", line);
     }
     fclose(fp_new_src);
     fclose(fp_tmp);
@@ -221,6 +236,8 @@ void Todo_initialize(Todo *todo)
   todo->priority = 0;
   todo->file_index = -1;
   todo->done = 0;
+  strcpy(todo->note,"");
+  strcpy(todo->message,"");
 }
 
 _Bool Todo_is_equal(Todo t1, Todo t2)
