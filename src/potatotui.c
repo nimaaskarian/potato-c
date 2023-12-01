@@ -46,6 +46,8 @@ void check_pids_length_and_set_selected(int *selected_index)
 
 pid_t handle_input_pid_menu(int ch, int *selected_index)
 {
+  if (pids_length_global == 1)
+    return pid_at_index(0);
   pid_t pid = 0;
   switch (ch) {
     case 'j':
