@@ -4,6 +4,7 @@ include config.mk
 SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
+DOC_DIR = doc
 DEB_DIR = debug
 TESTS_NAME = tests
 SHARED_DIR = shared
@@ -28,6 +29,11 @@ D_NAME = potd
 CTL_NAME = potctl
 TUI_NAME = potui
 
+BINS = ${BIN_DIR}/${D_NAME} ${BIN_DIR}/${CTL_NAME} ${BIN_DIR}/${TUI_NAME} 
+
+MD_DOCS = $(wildcard ${DOC_DIR}/*.md)
+MAN_PAGES = $(patsubst %.md,%.1,$(MD_DOCS))
+
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -36,17 +42,29 @@ $(OBJ_DIR)/%.odeb: $(SRC_DIR)/%.c
 	mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) ${DEBFLAGS} -c $< -o $@
 
-all: options ${BIN_DIR}/${D_NAME} ${BIN_DIR}/${CTL_NAME} ${BIN_DIR}/${TUI_NAME} #${DEB_DIR}/${TESTS_NAME} test
+all: options ${BINS}
 
-test:
+docs: ${MD_DOCS}
+	for man in ${MD_DOCS}; do \
+		pandoc $$man -s -t man -o $${man/.md}.1; \
+	done
+
+
+test: ${DEB_DIR}/${TESTS_NAME}
 	@echo Running tests:
 	@./${DEB_DIR}/${TESTS_NAME} && echo Tests are looking good!
 
-install: all install_options
+install: all install_options ${MAN_PAGES}
 	mkdir -p ${DESTDIR}${PREFIX}/bin
-	cp -f ${BIN_DIR}/${D_NAME} ${DESTDIR}${PREFIX}/bin
-	cp -f ${BIN_DIR}/${CTL_NAME} ${DESTDIR}${PREFIX}/bin
-	cp -f ${BIN_DIR}/${TUI_NAME} ${DESTDIR}${PREFIX}/bin
+	for bin in ${BINS}; do \
+		cp -f $$bin ${DESTDIR}${PREFIX}/bin; \
+	done
+
+	mkdir -p ${DESTDIR}${MANPREFIX}/man1
+	for man_page in ${MAN_PAGES}; do \
+		sed "s/VERSION/${VERSION}/g" < $$man_page > ${DESTDIR}${MANPREFIX}/man1/$$(basename $$man_page); \
+	done
+
 
 ${DEB_DIR}/${TESTS_NAME}: ${OBJ_TESTS}
 	mkdir -p ${DEB_DIR}

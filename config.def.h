@@ -1,5 +1,4 @@
-// Set both notif_title and notif_body to NULL 
-// If you want program to have no notifications on event
+// Set both notif_title and notif_body to NULL if you want program to have no notifications on event
 
 #define POMODORO_NOTIF_TITLE "Pomodoro"
 #define POMODORO_NOTIF_BODY "Time to focus!"
@@ -40,11 +39,3 @@ static const char* ON_UNPAUSE_COMMANDS[] = {
 #define POMODORO_MINUTES 25
 #define SHORT_BREAK_MINUTES 5
 #define LONG_BREAK_MINUTES 30
-
-#ifdef INITIALIZE_APP
-  #define APP_NOTIFICATION 1
-  #define APP_PRINT_POMODORO_COUNT 1
-  #define APP_FLUSH 1
-  #define APP_NEW_LINE_AT_QUIT 1
-  #define APP_RUN_SOCKET 1
-#endif

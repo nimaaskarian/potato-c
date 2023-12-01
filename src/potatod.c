@@ -19,14 +19,6 @@
 #include "../config.h"
 #include "../include/utils.h"
 
-#ifndef INITIALIZE_APP
-  #define APP_NOTIFICATION 0
-  #define APP_PRINT_POMODORO_COUNT 0
-  #define APP_FLUSH 0
-  #define APP_NEW_LINE_AT_QUIT 0
-  #define APP_RUN_SOCKET 1
-#endif
-
 typedef struct {
   _Bool flush, notification;
   _Bool new_line_at_quit, print_pomodoro_count, run_socket;
@@ -49,19 +41,22 @@ void quit(int signum)
 void read_options_to_app(int argc, char*argv[])
 {
   int ch;
-  while ((ch = getopt(argc, argv, "fnpN")) != -1) {
+  while ((ch = getopt(argc, argv, "fnpNs")) != -1) {
     switch (ch) {
       case 'f':
-        app.flush = !APP_FLUSH;
+        app.flush = 1;
         break;
       case 'n':
-        app.notification = !APP_NOTIFICATION;
+        app.notification = 1;
         break;
       case 'p':
-        app.print_pomodoro_count = !APP_PRINT_POMODORO_COUNT;
+        app.print_pomodoro_count = 1;
         break;
       case 'N':
-        app.new_line_at_quit = !APP_NEW_LINE_AT_QUIT;
+        app.new_line_at_quit = 1;
+        break;
+      case 's':
+        app.run_socket = 0;
         break;
     }
   }
@@ -170,13 +165,11 @@ void skip_signal_handler(int signum)
 
 void initialize_app()
 {
-  #ifdef INITIALIZE_APP
-    app.flush = APP_FLUSH;
-    app.notification = APP_NOTIFICATION;
-    app.print_pomodoro_count = APP_PRINT_POMODORO_COUNT;
-    app.new_line_at_quit = APP_NEW_LINE_AT_QUIT;
-    app.run_socket = APP_RUN_SOCKET;
-  #endif
+  app.flush = 0;
+  app.notification = 0;
+  app.print_pomodoro_count = 0;
+  app.new_line_at_quit = 0;
+  app.run_socket = 1;
 }
 
 void reset_signal_handler()

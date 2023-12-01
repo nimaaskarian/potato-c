@@ -75,8 +75,10 @@ void get_timer_each_second(char *pid_str, int index)
 
 void list_all_timers()
 {
-  puts("INDEX\tPID\tTIME\tPAUSED\tPOMODOROS");
-  run_function_on_pid_file_index(handle_list_pid_files, EVERY_MEMBER);
+  if (get_pids_length()) {
+    puts("INDEX\tPID\tTIME\tPAUSED\tPOMODOROS");
+    run_function_on_pid_file_index(handle_list_pid_files, EVERY_MEMBER);
+  }
 }
 
 int main(int argc, char *argv[])

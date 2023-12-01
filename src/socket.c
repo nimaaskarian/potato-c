@@ -40,8 +40,8 @@ int read_sock_port_from_pid_file(int pid)
   get_pid_file_path(pid, path);
 
   fptr = fopen(path, "r");
-  // if (!fptr)
-  //   return NO_PORT;
+  if (!fptr)
+    return NO_PORT;
   int sock_port;
   
   int scanf_status = fscanf(fptr, "%d", &sock_port);
