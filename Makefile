@@ -8,13 +8,13 @@ DEB_DIR = debug
 TESTS_NAME = tests
 SHARED_DIR = shared
 
-SRC_CTL = src/potatoctl.c src/utils.c src/client.c src/socket.c src/timer.c
+SRC_CTL = src/potatoctl.c src/utils.c src/client.c src/socket.c src/timer.c src/pidfile.c
 OBJ_CTL = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_CTL))
 
-SRC_D = src/timer.c src/potatod.c src/utils.c src/socket.c
+SRC_D = src/timer.c src/potatod.c src/utils.c src/socket.c src/pidfile.c src/client.c
 OBJ_D = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_D))
 
-SRC_TUI = src/potatotui.c src/timer.c src/utils.c src/socket.c src/client.c src/todo.c src/ncurses-utils.c
+SRC_TUI = src/potatotui.c src/timer.c src/utils.c src/socket.c src/client.c src/todo.c src/ncurses-utils.c src/pidfile.c
 OBJ_TUI = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_TUI))
 
 SRC_TESTS = src/tests.c src/timer.c src/utils.c

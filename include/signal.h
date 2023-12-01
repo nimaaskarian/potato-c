@@ -11,7 +11,5 @@
 #define SIG_DEC_POMODORO_COUNT    45
 #define SIG_INC_POMODORO_COUNT    46
 #define SIG_RESET                 47
-
-#define POTATO_PIDS_DIRECTORY "/tmp/potato-c"
 #endif // !SIGNAL_H__
 

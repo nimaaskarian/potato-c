@@ -11,6 +11,7 @@
 #include "../include/socket.h"
 #include "../include/utils.h"
 #include "../include/timer.h"
+#include "../include/pidfile.h"
 
 #define handle_kill(NAME, SIG) void handle_##NAME(char *str, int index)\
 {\
@@ -50,14 +51,10 @@ void run_function_on_pid_file_index(void(* handler)(char *, int index), int sele
   }
 }
 
-void remove_potato_pid_file(char *name, int index)
+void handle_remove_pid(char *name, int index)
 {
-  char path[PATH_MAX];
-  snprintf(path, PATH_MAX, "%s/%s", POTATO_PIDS_DIRECTORY, name);
-
-  remove(path);
+  remove_pid_file(atoi(name));
 }
-
 
 void run_function_on_pid_file_pid(void(* handler)(char *, int index), int selected_pid)
 {
@@ -192,9 +189,9 @@ int send_socket_request_with_fd(SocketRequest req, int sockfd)
 
 int send_socket_request_return_num(SocketRequest req, int pid)
 {
-  int sockfd = connect_socket(return_sock_port_from_number(pid));
-  if (sockfd == -1)
-    return -1;
+  int sockfd = connect_socket(read_sock_port_from_pid_file(pid));
+  if (sockfd == NO_PORT)
+    return NO_PORT;
 
   int output = send_socket_request_with_fd(req, sockfd);
   return output;
@@ -204,7 +201,7 @@ Timer get_timer_pid(pid_t pid)
 {
   #define req REQ_TIMER_FULL
 
-  int sockfd = connect_socket(return_sock_port_from_number(pid));
+  int sockfd = connect_socket(read_sock_port_from_pid_file(pid));
   char * buffer = send_req_return_str(req, sockfd);
 
   Timer timer;

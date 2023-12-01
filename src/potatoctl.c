@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
         list_all_timers();
       break;
 
-      case_index('c', remove_potato_pid_file);
+      case_index('c', handle_remove_pid);
       case_index('p', handle_pause);
       case_index('u', handle_unpause);
       case_index('t', handle_toggle_pause);

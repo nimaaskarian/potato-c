@@ -60,7 +60,7 @@ pid_t handle_input_pid_menu(int ch, int *selected_index)
       *selected_index = 0;
       break;
     case 'c':
-      run_function_on_pid_file_index(remove_potato_pid_file, *selected_index);
+      run_function_on_pid_file_index(handle_remove_pid, *selected_index);
       pids_length_global--;
       break;
     case 'D':

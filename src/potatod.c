@@ -14,6 +14,7 @@
 #include "../include/timer.h"
 #include "../include/signal.h"
 #include "../include/socket.h"
+#include "../include/pidfile.h"
 
 #include "../config.h"
 #include "../include/utils.h"
@@ -34,32 +35,9 @@ typedef struct {
 Timer timer;
 App app;
 
-
-void create_pid_file()
-{
-  struct stat st = {0};
-  if (stat(POTATO_PIDS_DIRECTORY, &st) == -1) {
-    mkdir(POTATO_PIDS_DIRECTORY, 0700);
-  }
-
-  char pid_path[PATH_MAX];
-  snprintf(pid_path, PATH_MAX, "%s/%d", POTATO_PIDS_DIRECTORY, getpid());
-
-  FILE* file_ptr = fopen(pid_path, "w");
-  fclose(file_ptr);
-}
-
-void remove_pid_file()
-{
-  char pid_path[PATH_MAX];
-  snprintf(pid_path, PATH_MAX, "%s/%d", POTATO_PIDS_DIRECTORY, getpid());
-
-  remove(pid_path);
-}
-
 void quit(int signum)
 {
-  remove_pid_file();
+  remove_pid_file(getpid());
   if (app.new_line_at_quit)
     puts("");
 
@@ -309,10 +287,15 @@ void assign_signals_to_handlers()
 }
 
 
-// #define PORT 8080
 void *run_sock_server_thread(void *arg)
 {
-  int port = return_sock_port_from_number(getpid());
+  int port = next_available_sock_port();
+  write_sock_port_to_pid_file(getpid(), port);
+  if (port == NO_PORT) {
+    puts("Unable to create socket.");
+    fflush(stdout);
+    return EXIT_FAILURE;
+  }
   int server_fd, new_socket;
   ssize_t valread;
   struct sockaddr_in address;
@@ -415,7 +398,7 @@ int main(int argc, char *argv[])
 
   run_before_command_based_on_timertype(timer.type);
 
-  create_pid_file();
+  create_pid_file(getpid());
   assign_signals_to_handlers();
 
   if (app.run_socket) {
