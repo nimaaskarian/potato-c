@@ -294,7 +294,7 @@ void *run_sock_server_thread(void *arg)
   if (port == NO_PORT) {
     puts("Unable to create socket.");
     fflush(stdout);
-    return EXIT_FAILURE;
+    pthread_exit(NULL);
   }
   int server_fd, new_socket;
   ssize_t valread;
@@ -383,6 +383,7 @@ void *run_sock_server_thread(void *arg)
       send(new_socket, message, message_len, 0);
       close(new_socket);
     }
+    free(message);
   }
   pthread_exit(EXIT_SUCCESS);
 }
