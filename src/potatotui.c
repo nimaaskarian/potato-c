@@ -422,6 +422,7 @@ void handle_input_todos_menu(TodosMenuArgs *args)
 }
 
 void *get_and_print_timer(void *arg) {
+  TimerType last_type = NULL_TYPE;
   Timer timer;
   while (1) {
     if (pid)
@@ -433,8 +434,10 @@ void *get_and_print_timer(void *arg) {
     }
 
     if (!timer_thread_paused) {
-      if (!timer.paused)
+      if (!timer.paused || timer.type != last_type) {
         ncurses_clear_lines_from_to(0,3);
+        last_type = timer.type;
+      }
       char * time_left_str = Timer_time_left(&timer);
       mvprintw(0,0, "Time left: %s", time_left_str);
       mvprintw(1,0, "Pomodoros: %d", timer.pomodoro_count);
