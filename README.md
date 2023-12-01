@@ -12,6 +12,15 @@ This program tries to be able to run on a potato (as the name suggests)
 - Is modular and simple
 - It is based on POSIX Philosophy, does one thing and one thing only.
 
+## Installation 
+If you use Arch Linux (btw) you can install [potato-c from AUR](https://aur.archlinux.org/packages/potato-c).
+Otherwise, you can use make/git to build and install the package for yourself like so
+```shell
+git clone https://github.com/nimaaskarian/potato-c
+cd potato-c
+sudo make install
+```
+
 ## Usage
 Refer to man pages for full documentation. If I do a documentation in here, I will likely forget to update it.
 Just after installation, use the commands below to read the docs.
