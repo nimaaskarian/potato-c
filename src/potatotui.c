@@ -243,10 +243,10 @@ void handle_input_todos_menu(TodosMenuArgs *args)
       fix_selected_index_and_highlight(&args->selected_index, args->nc_todos_size);
     break;
     case 'k':
-      (args->selected_index)--;
+      args->selected_index--;
     break;
     case 'j':
-      (args->selected_index)++;
+      args->selected_index++;
     break;
     case '/':{
       char search_term[MAX_MESSAGE+1];

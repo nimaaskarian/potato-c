@@ -21,18 +21,17 @@
 void handle_list_pid_files(char * pid_str, int index)
 {
   int pid = atoi(pid_str);
-  Timer *timer = request_timer(pid);
-  if (timer == NULL) {
+  Timer timer = get_timer_pid(pid);
+  if (timer.type == NULL_TYPE) {
     printf("%d\t%s\n", index, pid_str);
     return;
   }
 
-  char * is_paused = timer->paused ? "Yes" : "No";
+  char * is_paused = timer.paused ? "Yes" : "No";
 
-  char * time_left = Timer_time_left(timer);
-  printf("%d\t%s\t%s\t%s\t%d\n", index, pid_str, time_left, is_paused, timer->pomodoro_count);
+  char * time_left = Timer_time_left(&timer);
+  printf("%d\t%s\t%s\t%s\t%d\n", index, pid_str, time_left, is_paused, timer.pomodoro_count);
   free(time_left);
-  free(timer);
 }
 
 void get_type(char *pid_str, int index)

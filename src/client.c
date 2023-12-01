@@ -133,14 +133,39 @@ pid_t pid_at_index(unsigned int selected_index)
   return output;
 }
 
+int is_socket_available(int port) 
+{
+  int sockfd;
+  struct sockaddr_in serverAddr;
+
+  // Create socket
+  sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  if (sockfd < 0) {
+    perror("Socket creation failed");
+    exit(EXIT_FAILURE);
+  }
+
+  // Set server address details
+  serverAddr.sin_family = AF_INET;
+  serverAddr.sin_port = htons(port);
+  serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Replace with desired IP address
+
+  // Connect to the server
+  int connectionStatus = connect(sockfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+  if (connectionStatus == 0) {
+    close(sockfd);
+    return 1; // Socket connection exists
+  }
+
+  close(sockfd);
+  return 0; // Socket connection does not exist
+}
+
 int connect_socket(int port)
 {
   int status, valread, client_fd;
   struct sockaddr_in serv_addr;
   if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    char * notif = malloc(sizeof(char)*5);
-    snprintf(notif, 5, "%d", port);
-    send_notification("something", notif);
     return -1;
   }
 
@@ -189,7 +214,9 @@ int send_socket_request_with_fd(SocketRequest req, int sockfd)
 
 int send_socket_request_return_num(SocketRequest req, int pid)
 {
-  int sockfd = connect_socket(read_sock_port_from_pid_file(pid));
+  int port = read_sock_port_from_pid_file(pid);
+  // printf("%d\n",port);
+  int sockfd = connect_socket(port);
   if (sockfd == NO_PORT)
     return NO_PORT;
 
@@ -199,10 +226,10 @@ int send_socket_request_return_num(SocketRequest req, int pid)
 
 Timer get_timer_pid(pid_t pid)
 {
-  #define req REQ_TIMER_FULL
-
-  int sockfd = connect_socket(read_sock_port_from_pid_file(pid));
-  char * buffer = send_req_return_str(req, sockfd);
+  int port = read_sock_port_from_pid_file(pid);
+  // printf("%d\n",port);
+  int sockfd = connect_socket(port);
+  char * buffer = send_req_return_str(REQ_TIMER_FULL, sockfd);
 
   Timer timer;
   int scanned = sscanf(buffer, "%d-%d-%d-%d", &timer.seconds, &timer.pomodoro_count, &timer.paused, &timer.type);

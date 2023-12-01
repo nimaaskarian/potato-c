@@ -32,4 +32,5 @@ Timer * request_timer(pid_t pid);
 void handle_remove_pid(char *name, int index);
 int send_socket_request_with_fd(SocketRequest req, int sockfd);
 Timer get_timer_pid(pid_t pid);
+int is_socket_available(int port);
 #endif // !CLIENT_H__
