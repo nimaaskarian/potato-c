@@ -86,7 +86,13 @@ int main(int argc, char *argv[])
   _Bool loop_flag = 0;
   char server_address[16];
   int port = 0;
-  while ((ch = getopt(argc, argv, "1::T::S::c::lu::L::s::p::t::q::d::i::I::D::r::a:A:")) != -1) {
+  int shift_from_argv = 0;
+  int status = read_format_from_string(argv[1], &print_format);
+  if (status == EXIT_SUCCESS)
+    shift_from_argv = 1;
+
+  while ((ch = getopt(argc-shift_from_argv, argv+shift_from_argv,
+                      "1::T::S::c::lu::L::s::p::t::q::d::i::I::D::r::a:A:")) != -1) {
     switch (ch) {
       case 'l': 
         list_all_timers();
@@ -117,7 +123,6 @@ int main(int argc, char *argv[])
       case_index('1', get_timer_one_time);
     }
   }
-  read_format_from_optind(argc, argv, &print_format);
   if (port) {
     while (1) {
       timer = get_timer_from_port(port,server_address);

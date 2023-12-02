@@ -89,7 +89,7 @@ void Timer_initialize(Timer *restrict timer)
 
 void read_format_from_optind(int argc, char *argv[], char ** output_str)
 {
-  if (optind < argc) {
+  while (optind < argc) {
     if (argv[optind][0] == '+') {
       if (*output_str != NULL) {
         errno = 1;
@@ -99,8 +99,20 @@ void read_format_from_optind(int argc, char *argv[], char ** output_str)
       *output_str = argv[optind++] + 1;
     }
   }
-  if (output_str == NULL)
+  if (*output_str == NULL)
     *output_str = DEFAULT_FORMAT;
+}
+
+int read_format_from_string(char*input_str,char ** output_str)
+{
+  if (input_str[0] == '+') {
+    *output_str = input_str+1;
+  }
+  if (*output_str == NULL) {
+    *output_str = DEFAULT_FORMAT;
+    return EXIT_FAILURE;
+  }
+  return EXIT_SUCCESS;
 }
 
 static void divide_seconds_minutes_hours(unsigned int * seconds, unsigned int * minutes, unsigned int * hours)
@@ -147,9 +159,8 @@ Timer_format_character(Timer *restrict timer, char format_char)
       snprintf(str,100, "%d", timer->pomodoro_count);
     break;
     case 'f':
-      free(str);
       fflush(stdout);
-      return "";
+      strcpy(str, "");
     break;
     case 'b':
       snprintf(str,100, "%s", Timer_before_time(timer->type));
@@ -157,13 +168,16 @@ Timer_format_character(Timer *restrict timer, char format_char)
     case 'B':
       snprintf(str,100, "%s", BEFORE_POMODORO_COUNT_STRING);
     break;
+    case '%':
+      strcpy(str, "%");
+    break;
+    default:
+      errno = 1;
+      perror("Format character not defined");
+      exit(1);
+    break;
   }
-  if (strlen(str))
-    return str;
-
-  errno = 1;
-  perror("Format character not defined");
-  exit(1);
+  return str;
 }
 
 char * Timer_resolve_format(Timer *restrict timer, char const *format, char output[4096])
@@ -171,11 +185,7 @@ char * Timer_resolve_format(Timer *restrict timer, char const *format, char outp
   int output_index = 0;
   // variable of format current pointer is fmt_ptr
   for (char const *fmt_ptr = format; *fmt_ptr; fmt_ptr++) {
-    if (fmt_ptr[0] == '%' && fmt_ptr[1] == '%') {
-      output[output_index] = '%';
-      output_index += 1;
-      fmt_ptr+=1;
-    } else if (fmt_ptr[0] == '%' && fmt_ptr[1] != '%') {
+    if (fmt_ptr[0] == '%') {
       char *string_formated = Timer_format_character(timer,fmt_ptr[1]);
       output_index += snprintf(&output[output_index],4096-output_index, "%s", string_formated);
       free(string_formated);
