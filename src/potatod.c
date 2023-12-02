@@ -1,5 +1,6 @@
 #include <linux/limits.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -22,6 +23,7 @@
 typedef struct {
   _Bool flush, notification;
   _Bool new_line_at_quit, print_pomodoro_count, run_socket;
+  char * format;
 } App;
 
 Timer timer;
@@ -60,6 +62,7 @@ void read_options_to_app(int argc, char*argv[])
         break;
     }
   }
+  read_format_from_optind(argc, argv, &app.format);
 }
 
 
@@ -85,13 +88,8 @@ void run_before_command_based_on_timertype(TimerType type)
 
 void print_all()
 {
-  Timer_print_before_time(timer);
-  Timer_print(&timer);
-
-  if (app.print_pomodoro_count) 
-    printf("%s%d",BEFORE_POMODORO_COUNT_STRING ,timer.pomodoro_count);
-  puts("");
-  if (app.flush) 
+  Timer_print_format(&timer, app.format);
+  if (app.flush)
     fflush(stdout);
 }
 
@@ -170,6 +168,7 @@ void initialize_app()
   app.print_pomodoro_count = 0;
   app.new_line_at_quit = 0;
   app.run_socket = 1;
+  app.format = NULL;
 }
 
 void reset_signal_handler()

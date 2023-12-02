@@ -1,48 +1,47 @@
 include config.mk
 
 
-SRC_DIR = src
-OBJ_DIR = obj
-BIN_DIR = bin
-DOC_DIR = doc
-DEB_DIR = debug
+SRC = src
+OBJ = obj
+BIN = bin
+DOC = doc
+DEB = debug
 TESTS_NAME = tests
 SHARED_DIR = shared
 
-SRC_CTL = src/potatoctl.c src/utils.c src/client.c src/socket.c src/timer.c src/pidfile.c
-OBJ_CTL = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_CTL))
+SRC_CTL = ${SRC}/potatoctl.c ${SRC}/utils.c ${SRC}/client.c ${SRC}/socket.c ${SRC}/timer.c ${SRC}/pidfile.c
+SRC_D = ${SRC}/timer.c ${SRC}/potatod.c ${SRC}/utils.c ${SRC}/socket.c ${SRC}/pidfile.c
+SRC_TUI = ${SRC}/potatotui.c ${SRC}/timer.c ${SRC}/utils.c ${SRC}/socket.c ${SRC}/client.c ${SRC}/todo.c ${SRC}/ncurses-utils.c ${SRC}/pidfile.c
 
-SRC_D = src/timer.c src/potatod.c src/utils.c src/socket.c src/pidfile.c src/client.c
-OBJ_D = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_D))
+OBJ_CTL = $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRC_CTL))
+OBJ_D = $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRC_D))
+OBJ_TUI = $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRC_TUI))
 
-SRC_TUI = src/potatotui.c src/timer.c src/utils.c src/socket.c src/client.c src/todo.c src/ncurses-utils.c src/pidfile.c
-OBJ_TUI = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_TUI))
+OBJ_CTL_DEB = $(patsubst $(SRC)/%.c,$(OBJ)/%.odeb,$(SRC_CTL))
+OBJ_D_DEB = $(patsubst $(SRC)/%.c,$(OBJ)/%.odeb,$(SRC_D))
+OBJ_TUI_DEB = $(patsubst $(SRC)/%.c,$(OBJ)/%.odeb,$(SRC_TUI))
 
-SRC_TESTS = src/tests.c src/timer.c src/utils.c
-OBJ_TESTS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_TESTS))
-
-OBJ_CTL_DEB = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.odeb,$(SRC_CTL))
-OBJ_D_DEB = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.odeb,$(SRC_D))
-OBJ_TUI_DEB = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.odeb,$(SRC_TUI))
+SRC_TESTS = ${SRC}/tests.c ${SRC}/timer.c ${SRC}/utils.c
+OBJ_TESTS = $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRC_TESTS))
 
 D_NAME = potd
 CTL_NAME = potctl
 TUI_NAME = potui
 
-BINS = ${BIN_DIR}/${D_NAME} ${BIN_DIR}/${CTL_NAME} ${BIN_DIR}/${TUI_NAME} 
+BINS_PATHS = ${BIN}/${D_NAME} ${BIN}/${CTL_NAME} ${BIN}/${TUI_NAME} 
 
-MD_DOCS = $(wildcard ${DOC_DIR}/*.md)
+MD_DOCS = $(wildcard ${DOC}/*.md)
 MAN_PAGES = $(patsubst %.md,%.1,$(MD_DOCS))
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	mkdir -p $(OBJ_DIR)
+$(OBJ)/%.o: $(SRC)/%.c
+	mkdir -p $(OBJ)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/%.odeb: $(SRC_DIR)/%.c
-	mkdir -p $(OBJ_DIR)
+$(OBJ)/%.odeb: $(SRC)/%.c
+	mkdir -p $(OBJ)
 	$(CC) $(CFLAGS) ${DEBFLAGS} -c $< -o $@
 
-all: options ${BINS}
+all: options ${BINS_PATHS}
 
 docs: ${MD_DOCS}
 	for man in ${MD_DOCS}; do \
@@ -50,13 +49,13 @@ docs: ${MD_DOCS}
 	done
 
 
-test: ${DEB_DIR}/${TESTS_NAME}
+test: ${DEB}/${TESTS_NAME}
 	@echo Running tests:
-	@./${DEB_DIR}/${TESTS_NAME} && echo Tests are looking good!
+	@./${DEB}/${TESTS_NAME} && echo Tests are looking good!
 
 install: all install_options ${MAN_PAGES}
 	mkdir -p ${DESTDIR}${PREFIX}/bin
-	for bin in ${BINS}; do \
+	for bin in ${BINS_PATHS}; do \
 		cp -f $$bin ${DESTDIR}${PREFIX}/bin; \
 	done
 
@@ -66,9 +65,9 @@ install: all install_options ${MAN_PAGES}
 	done
 
 
-${DEB_DIR}/${TESTS_NAME}: ${OBJ_TESTS}
-	mkdir -p ${DEB_DIR}
-	$(CC) -o ${DEB_DIR}/${TESTS_NAME} ${OBJ_TESTS}
+${DEB}/${TESTS_NAME}: ${OBJ_TESTS}
+	mkdir -p ${DEB}
+	$(CC) -o ${DEB}/${TESTS_NAME} ${OBJ_TESTS}
 
 ${OBJ_CTL} ${OBJ_D} ${OBJ_TUI} ${OBJ_TESTS} ${OBJ_DEBUG}: include/signal.h config.h config.mk
 
@@ -76,6 +75,7 @@ install_options:
 	@echo potato install options:
 	@echo "DESTDIR  = ${DESTDIR}"
 	@echo "PREFIX   = ${PREFIX}"
+	@echo "MANPREFIX   = ${MANPREFIX}"
 
 options:
 	@echo potato build options:
@@ -83,40 +83,44 @@ options:
 	@echo "LDFLAGS  = ${LDFLAGS}"
 	@echo "CC       = ${CC}"
 
-${BIN_DIR}/${D_NAME}: ${OBJ_D}
-	mkdir -p $(BIN_DIR)
+${BIN}/${D_NAME}: ${OBJ_D}
+	mkdir -p $(BIN)
 	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJ_D}
 
-${BIN_DIR}/${CTL_NAME}: ${OBJ_CTL}
-	mkdir -p $(BIN_DIR)
+${BIN}/${CTL_NAME}: ${OBJ_CTL}
+	mkdir -p $(BIN)
 	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJ_CTL}
 
-${BIN_DIR}/${TUI_NAME}: ${OBJ_TUI}
-	mkdir -p $(BIN_DIR)
+${BIN}/${TUI_NAME}: ${OBJ_TUI}
+	mkdir -p $(BIN)
 	${CC} ${CFLAGS} ${LDFLAGS} `pkg-config --libs --cflags ncurses` -o $@ ${OBJ_TUI}
 
 
-debug: ${DEB_DIR}/${D_NAME} ${DEB_DIR}/${CTL_NAME} ${DEB_DIR}/${TUI_NAME}
+debug: ${DEB}/${D_NAME} ${DEB}/${CTL_NAME} ${DEB}/${TUI_NAME}
 
-${DEB_DIR}/${D_NAME}: ${OBJ_D_DEB}
-	mkdir -p $(DEB_DIR)
+${DEB}/${D_NAME}: ${OBJ_D_DEB}
+	mkdir -p $(DEB)
 	$(CC) ${CFLAGS} ${LDFLAGS} ${DEBFLAGS} -o $@ ${OBJ_D_DEB}
 
-${DEB_DIR}/${CTL_NAME}: ${OBJ_CTL_DEB}
-	mkdir -p $(DEB_DIR)
+${DEB}/${CTL_NAME}: ${OBJ_CTL_DEB}
+	mkdir -p $(DEB)
 	$(CC) ${CFLAGS} ${LDFLAGS} ${DEBFLAGS} -o $@ ${OBJ_CTL_DEB}
 
-${DEB_DIR}/${TUI_NAME}: ${OBJ_TUI_DEB}
-	mkdir -p $(DEB_DIR)
+${DEB}/${TUI_NAME}: ${OBJ_TUI_DEB}
+	mkdir -p $(DEB)
 	$(CC) ${CFLAGS} ${LDFLAGS} ${DEBFLAGS} `pkg-config --libs --cflags ncurses` -o $@ ${OBJ_TUI_DEB}
 
 config.h: 
 	cp config.def.h $@
 
 clean:
-	rm $(OBJ_DIR) $(BIN_DIR) $(DEB_DIR) -rf
+	rm $(OBJ) $(BIN) $(DEB) -rf
 
 uninstall:
-	rm ${DESTDIR}${PREFIX}/bin/${D_NAME}
-	rm ${DESTDIR}${PREFIX}/bin/${CTL_NAME}
-	rm ${DESTDIR}${PREFIX}/bin/${TUI_NAME}
+	for bin in ${BINS_PATHS}; do \
+		rm ${DESTDIR}${PREFIX}/bin/$$bin
+	done
+
+	for man_page in ${MAN_PAGES}; do \
+		rm ${DESTDIR}${MANPREFIX}/man1/$$(basename $$man_page); \
+	done

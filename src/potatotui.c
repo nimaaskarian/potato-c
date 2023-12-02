@@ -12,6 +12,9 @@
 #include "../include/todo.h"
 #include "../include/ncurses-utils.h"
 
+char * server_address = "127.0.0.1";
+char * print_format = NULL;
+
 int handle_input_character_common(int ch)
 {
   switch (ch) {
@@ -420,13 +423,26 @@ void handle_input_todos_menu(TodosMenuArgs *args)
     args->selected_index = args->nc_todos_size-1 < 0 ? 0 : args->nc_todos_size-1;
   }
 }
+void printw_timer_return_last_type(Timer timer, TimerType *last_type)
+{
+  if (!timer.paused || timer.type != *last_type) {
+    ncurses_clear_lines_from_to(0,3);
+    *last_type = timer.type;
+  }
+  char * time_left_str = Timer_time_left(&timer);
+  mvprintw(0,0, "Time left: %s", time_left_str);
+  mvprintw(1,0, "Pomodoros: %d", timer.pomodoro_count);
+  const char * type_string = get_type_string(timer.type);
+  mvprintw(2,0, "Type: %s", type_string);
+  free(time_left_str);
+}
 
-void *get_and_print_timer(void *arg) {
+void *get_and_print_local_timer(void *arg) {
   TimerType last_type = NULL_TYPE;
   Timer timer;
   while (1) {
     if (pid)
-      timer = get_timer_pid(pid);
+      timer = get_local_timer_from_pid(pid);
 
     if (timer.type == NULL_TYPE) {
       pause_timer_thread();
@@ -434,16 +450,7 @@ void *get_and_print_timer(void *arg) {
     }
 
     if (!timer_thread_paused) {
-      if (!timer.paused || timer.type != last_type) {
-        ncurses_clear_lines_from_to(0,3);
-        last_type = timer.type;
-      }
-      char * time_left_str = Timer_time_left(&timer);
-      mvprintw(0,0, "Time left: %s", time_left_str);
-      mvprintw(1,0, "Pomodoros: %d", timer.pomodoro_count);
-      const char * type_string = get_type_string(timer.type);
-      mvprintw(2,0, "Type: %s", type_string);
-      free(time_left_str);
+      printw_timer_return_last_type(timer, &last_type);
     }
     napms(1000/2);
   }
@@ -483,7 +490,7 @@ void start_timer_loop_on_thread()
 {
   erase();
   pthread_t timer_thread;
-  pthread_create(&timer_thread, NULL, get_and_print_timer, NULL);
+  pthread_create(&timer_thread, NULL, get_and_print_local_timer, NULL);
 
   TodosMenuArgs todo_menu_args;
   todo_menu_args.searched_todos_index = -1;
@@ -537,10 +544,9 @@ int main(int argc, char *argv[])
   ncurses_initialize_screen();
   int selected_index = 0;
   while (1) {
-    timer_thread_paused = 1;
-    pid = 0;
+    pause_timer_thread();
     pid = pid_selection_menu(&selected_index);
-    timer_thread_paused = 0;
+    unpause_timer_thread();
 
     start_timer_loop_on_thread();
   }

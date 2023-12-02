@@ -24,13 +24,13 @@ handle_kill(reset_pomodoro, SIG_RESET);
 
 void run_function_on_pid_file_index(void(* handler)(char *, int index), int selected_index);
 void run_function_on_pid_file_pid(void(* handler)(char *, int index), int selected_pid);
-int connect_socket(int port);
-int send_socket_request_return_num(SocketRequest req, int pid);
+int connect_socket(int port, char * server_address);
+int send_socket_request_return_num(SocketRequest req, int pid, char * server_address);
 unsigned int get_pids_length();
 pid_t pid_at_index(unsigned int selected_index);
 Timer * request_timer(pid_t pid);
 void handle_remove_pid(char *name, int index);
 int send_socket_request_with_fd(SocketRequest req, int sockfd);
-Timer get_timer_pid(pid_t pid);
-int is_socket_available(int port);
+Timer get_timer_from_port(int port, char * server_address);
+Timer get_local_timer_from_pid(int pid);
 #endif // !CLIENT_H__

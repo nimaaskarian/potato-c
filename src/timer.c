@@ -1,6 +1,8 @@
 #include <math.h>
 #include <stdio.h>
+#include <errno.h>
 #include <time.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -85,6 +87,22 @@ void Timer_initialize(Timer *restrict timer)
   timer->type = POMODORO_TYPE;
 }
 
+void read_format_from_optind(int argc, char *argv[], char ** output_str)
+{
+  if (optind < argc) {
+    if (argv[optind][0] == '+') {
+      if (*output_str != NULL) {
+        errno = 1;
+        perror("You've specified multiple format arguments");
+        exit(EXIT_FAILURE);
+      }
+      *output_str = argv[optind++] + 1;
+    }
+  }
+  if (output_str == NULL)
+    *output_str = DEFAULT_FORMAT;
+}
+
 static void divide_seconds_minutes_hours(unsigned int * seconds, unsigned int * minutes, unsigned int * hours)
 {
   *hours = (*seconds)/(SECONDS_IN_HOUR);
@@ -117,6 +135,66 @@ char * Timer_time_left(Timer *restrict timer)
   return output;
 }
 
+static char *
+Timer_format_character(Timer *restrict timer, char format_char)
+{
+  char *str = malloc(sizeof(char)*101);
+  switch (format_char) {
+    case 't':
+      free(str);
+      return Timer_time_left(timer);
+    case 'p':
+      snprintf(str,100, "%d", timer->pomodoro_count);
+    break;
+    case 'f':
+      free(str);
+      fflush(stdout);
+      return "";
+    break;
+    case 'b':
+      snprintf(str,100, "%s", Timer_before_time(timer->type));
+    break;
+    case 'B':
+      snprintf(str,100, "%s", BEFORE_POMODORO_COUNT_STRING);
+    break;
+  }
+  if (strlen(str))
+    return str;
+
+  errno = 1;
+  perror("Format character not defined");
+  exit(1);
+}
+
+char * Timer_resolve_format(Timer *restrict timer, char const *format, char output[4096])
+{
+  int output_index = 0;
+  // variable of format current pointer is fmt_ptr
+  for (char const *fmt_ptr = format; *fmt_ptr; fmt_ptr++) {
+    if (fmt_ptr[0] == '%' && fmt_ptr[1] == '%') {
+      output[output_index] = '%';
+      output_index += 1;
+      fmt_ptr+=1;
+    } else if (fmt_ptr[0] == '%' && fmt_ptr[1] != '%') {
+      char *string_formated = Timer_format_character(timer,fmt_ptr[1]);
+      output_index += snprintf(&output[output_index],4096-output_index, "%s", string_formated);
+      free(string_formated);
+      fmt_ptr++;
+    } else {
+      output[output_index] = fmt_ptr[0];
+      output_index += 1;
+    }
+  }
+  return output;
+}
+
+void Timer_print_format(Timer *restrict timer, const char * format)
+{
+  char str[4096];
+  Timer_resolve_format(timer, format, str);
+  puts(str);
+}
+
 // This method DOES NOT flush the output afterwards.
 // Do the flushing yourself (if you need to)
 void Timer_print(Timer *restrict timer)
@@ -131,21 +209,29 @@ void Timer_print(Timer *restrict timer)
   }
 }
 
-void Timer_print_before_time(Timer timer)
+const char * Timer_before_time(TimerType type)
 {
-  switch (timer.type) {
+  switch (type) {
     case POMODORO_TYPE:
       if (POMODORO_BEFORE_TIME_STRING != NULL)
-        printf("%s", POMODORO_BEFORE_TIME_STRING);
+        return POMODORO_BEFORE_TIME_STRING;
     break;
     case SHORT_BREAK_TYPE:
       if (SHORT_BREAK_BEFORE_TIME_STRING != NULL)
-        printf("%s", SHORT_BREAK_BEFORE_TIME_STRING);
+         return SHORT_BREAK_BEFORE_TIME_STRING;
     break;
     case LONG_BREAK_TYPE:
       if (LONG_BREAK_BEFORE_TIME_STRING != NULL)
-        printf("%s", LONG_BREAK_BEFORE_TIME_STRING);
+        return LONG_BREAK_BEFORE_TIME_STRING;
     break;
+    case NULL_TYPE:
+      return "";
+    return "";
   }
+}
+void Timer_print_before_time(Timer timer)
+{
+  const char * before_time = Timer_before_time(timer.type);
+  printf("%s", before_time);
 }
 

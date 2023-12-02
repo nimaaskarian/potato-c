@@ -21,7 +21,7 @@
 void handle_list_pid_files(char * pid_str, int index)
 {
   int pid = atoi(pid_str);
-  Timer timer = get_timer_pid(pid);
+  Timer timer = get_local_timer_from_pid(pid);
   if (timer.type == NULL_TYPE) {
     printf("%d\t%s\n", index, pid_str);
     return;
@@ -36,39 +36,33 @@ void handle_list_pid_files(char * pid_str, int index)
 
 void get_type(char *pid_str, int index)
 {
-  printf("%d\n",send_socket_request_return_num(REQ_TYPE,atoi(pid_str)));
+  printf("%d\n",send_socket_request_return_num(REQ_TYPE,atoi(pid_str), "127.0.0.1"));
 }
 
 void get_seconds(char *pid_str, int index)
 {
-  printf("%d\n", send_socket_request_return_num(REQ_SECONDS,atoi(pid_str)));
+  printf("%d\n", send_socket_request_return_num(REQ_SECONDS,atoi(pid_str), "127.0.0.1"));
 }
+
+char * print_format = NULL;
 void get_timer_one_time(char *pid_str, int index)
 {
-  Timer timer;
-  timer = get_timer_pid(atoi(pid_str));
+  Timer timer = get_local_timer_from_pid(atoi(pid_str));
   if (timer.type == NULL_TYPE)
     return;
 
-  Timer_print_before_time(timer);
-  Timer_print(&timer);
-  printf("%s%d",BEFORE_POMODORO_COUNT_STRING ,timer.pomodoro_count);
-  puts("");
-  fflush(stdout);
+  Timer_print_format(&timer, print_format);
 }
+
 void get_timer_each_second(char *pid_str, int index)
 {
   Timer timer;
   while (1) {
-    timer = get_timer_pid(atoi(pid_str));
+    timer = get_local_timer_from_pid(atoi(pid_str));
     if (timer.type == NULL_TYPE)
       break;
 
-    Timer_print_before_time(timer);
-    Timer_print(&timer);
-    printf("%s%d",BEFORE_POMODORO_COUNT_STRING ,timer.pomodoro_count);
-    puts("");
-    fflush(stdout);
+    Timer_print_format(&timer, print_format);
     sleep(1);
   }
 }
@@ -88,10 +82,24 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
   }
   int ch;
-  while ((ch = getopt(argc, argv, "1::T::S::c::lu::L::s::p::t::q::d::i::I::D::r::")) != -1) {
+  Timer timer = {.type=NULL_TYPE};
+  _Bool loop_flag = 0;
+  char server_address[16];
+  int port = 0;
+  while ((ch = getopt(argc, argv, "1::T::S::c::lu::L::s::p::t::q::d::i::I::D::r::a:A:")) != -1) {
     switch (ch) {
       case 'l': 
         list_all_timers();
+      break;
+      case 'A':
+        loop_flag = 1;
+      case 'a': {
+        int status = sscanf(optarg, "%15[^:]:%d", server_address, &port);
+        if (status != 2) {
+          puts("Socket address is invalid");
+          exit(1);
+        }
+      }
       break;
 
       case_index('c', handle_remove_pid);
@@ -108,6 +116,20 @@ int main(int argc, char *argv[])
       case_index('T', get_timer_each_second);
       case_index('1', get_timer_one_time);
     }
+  }
+  read_format_from_optind(argc, argv, &print_format);
+  if (port) {
+    while (1) {
+      timer = get_timer_from_port(port,server_address);
+      if (timer.type == NULL_TYPE) {
+        puts("There is no timer on the specified address");
+        exit(EXIT_FAILURE);
+      }
+      Timer_print_format(&timer, print_format);
+      if (!loop_flag )
+        break;
+      sleep(1);
+    } 
   }
   return EXIT_SUCCESS;
 }

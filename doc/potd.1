@@ -21,7 +21,7 @@
 potd - potato-c daemon
 .SH SYNOPSIS
 .PP
-potd [-fnpNs]
+potd [-fnpNs] [+\f[I]FORMAT\f[R]{%b%t%B%p}]
 .SH DESCRIPTION
 .PP
 potd is the daemon application of potato-c.\ This is the core.
@@ -42,8 +42,9 @@ Suitable for using directly in bars.
 send notifications after each event.
 This option needs libnotify (notify-send) to be installed.
 .TP
-\f[B]-p\f[R]
-print the count of pomodoro, not just the timer.
+\f[B]+\f[BI]FORMAT\f[B]\f[R]
+format string of how the daemon prints the timer.
+See more about it in \f[I]FORMAT\f[R] section
 .TP
 \f[B]-N\f[R]
 print a new line at quit.
@@ -52,5 +53,29 @@ Suitable for using directly in bars
 \f[B]-s\f[R]
 don\[cq]t run socket server.
 The default behavior runs a socket server.
+.SH FORMAT
+.PP
+Format can be any string, only the string below has meaning for our
+timer.
+.TP
+\f[B]%b\f[R]
+before_timer string (which indicates the mode of timer, can be changed
+in config.h at compile time).
+.TP
+\f[B]%t\f[R]
+time remaining of the timer in hours:minutes:seconds or minutes:seconds.
+.TP
+\f[B]%B\f[R]
+before pomodoro timer.
+This is a static string.
+Can be changed in config.h at compile time.
+.TP
+\f[B]%p\f[R]
+count of pomodoros left.
+.TP
+\f[B]%f\f[R]
+flush the output.
+Suitable for using in bars, at the end of the format string, without the
+\f[B]-f\f[R] option.
 .SH AUTHORS
 Nima Askarian.

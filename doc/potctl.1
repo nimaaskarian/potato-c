@@ -22,6 +22,7 @@ potctl - potato-c control
 .SH SYNOPSIS
 .PP
 potctl [-cputqsidIDrT1 \f[I]index\f[R](no index means all)] [-l]
+[+FORMAT{%b%t%B%p}] [-aA \f[I]ADDRESS\f[R]:\f[I]PORT\f[R]]
 .SH DESCRIPTION
 .PP
 potctl is the commandline controller of potato-c.
@@ -80,5 +81,19 @@ print the output of the daemon only one time.
 \f[B]-l\f[R]
 lists all the available daemons.
 Same effect as running without any arguments.
+.TP
+\f[B]+FORMAT\f[R]
+specify format string.
+Read \f[I]potd(1)\f[R]\[cq]s \f[I]FORMAT\f[R] section for more
+information.
+.TP
+\f[B]-a \f[BI]ADDRESS\f[B]:\f[BI]PORT\f[B]\f[R]
+specify a server address and port to connect to and see the output of
+the timer of.
+Prints the output only one time.
+.TP
+\f[B]-A \f[BI]ADDRESS\f[B]:\f[BI]PORT\f[B]\f[R]
+same as \f[B]-a\f[R] but gets the output from the server every second,
+just like the daemon itself.
 .SH AUTHORS
 Nima Askarian.

@@ -97,20 +97,6 @@ unsigned int get_pids_length()
   return output;
 }
 
-Timer * request_timer(pid_t pid)
-{
-  Timer *timer = malloc(sizeof(Timer));
-  timer->seconds = send_socket_request_return_num(REQ_SECONDS,pid);
-  if (timer->seconds == -1) {
-    free(timer);
-    return NULL;
-  }
-  timer->type = send_socket_request_return_num(REQ_TYPE,pid);
-  timer->pomodoro_count = send_socket_request_return_num(REQ_POMODOROS,pid);
-  timer->paused = send_socket_request_return_num(REQ_PAUSED, pid);
-  return timer;
-}
-
 pid_t pid_at_index(unsigned int selected_index)
 {
   DIR *dp;
@@ -133,35 +119,7 @@ pid_t pid_at_index(unsigned int selected_index)
   return output;
 }
 
-int is_socket_available(int port) 
-{
-  int sockfd;
-  struct sockaddr_in serverAddr;
-
-  // Create socket
-  sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (sockfd < 0) {
-    perror("Socket creation failed");
-    exit(EXIT_FAILURE);
-  }
-
-  // Set server address details
-  serverAddr.sin_family = AF_INET;
-  serverAddr.sin_port = htons(port);
-  serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Replace with desired IP address
-
-  // Connect to the server
-  int connectionStatus = connect(sockfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
-  if (connectionStatus == 0) {
-    close(sockfd);
-    return 1; // Socket connection exists
-  }
-
-  close(sockfd);
-  return 0; // Socket connection does not exist
-}
-
-int connect_socket(int port)
+int connect_socket(int port, char * server_address)
 {
   int status, valread, client_fd;
   struct sockaddr_in serv_addr;
@@ -174,7 +132,7 @@ int connect_socket(int port)
 
   // Convert IPv4 and IPv6 addresses from text to binary
   // form
-  if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+  if (inet_pton(AF_INET, server_address, &serv_addr.sin_addr) <= 0) {
     printf(
       "\nInvalid address/ Address not supported \n");
     return -1;
@@ -212,23 +170,28 @@ int send_socket_request_with_fd(SocketRequest req, int sockfd)
   return output;
 }
 
-int send_socket_request_return_num(SocketRequest req, int pid)
+int send_socket_request_return_num(SocketRequest req, int pid, char * server_address)
 {
   int port = read_sock_port_from_pid_file(pid);
   // printf("%d\n",port);
-  int sockfd = connect_socket(port);
+  int sockfd = connect_socket(port,server_address);
   if (sockfd == NO_PORT)
     return NO_PORT;
 
   int output = send_socket_request_with_fd(req, sockfd);
   return output;
 }
-
-Timer get_timer_pid(pid_t pid)
+#define LOCALHOST "127.0.0.1"
+Timer get_local_timer_from_pid(int pid)
 {
-  int port = read_sock_port_from_pid_file(pid);
+  return get_timer_from_port(read_sock_port_from_pid_file(pid), LOCALHOST);
+}
+
+Timer get_timer_from_port(int port, char * server_address)
+{
+  // int port = read_sock_port_from_pid_file(pid);
   // printf("%d\n",port);
-  int sockfd = connect_socket(port);
+  int sockfd = connect_socket(port,server_address);
   char * buffer = send_req_return_str(REQ_TIMER_FULL, sockfd);
 
   Timer timer;
@@ -236,7 +199,7 @@ Timer get_timer_pid(pid_t pid)
   free(buffer);
 
   if (scanned < 4) {
-    timer.type = -1;
+    timer.type = NULL_TYPE;
   }
   return timer;
 }

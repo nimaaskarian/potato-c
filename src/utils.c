@@ -53,7 +53,7 @@ void send_notification(char *title, char *description)
   int max_command_length = 512;
 
   #define PRINTF_TO_COMMAND snprintf((char*) command, max_command_length,"notify-send -a potato-c -h string:x-canonical-private-synchronous:potato-c-%d "
-  const char *command[max_command_length];
+  char command[max_command_length];
 
   if (title == NULL)
     PRINTF_TO_COMMAND"'' '%s' &> /dev/null &disown",getpid(), description);
@@ -61,6 +61,7 @@ void send_notification(char *title, char *description)
     PRINTF_TO_COMMAND"'%s' '' &> /dev/null &disown",getpid(), title);
   else
     PRINTF_TO_COMMAND"'%s' '%s' &> /dev/null &disown",getpid(), title, description);
+
 
   (void)system((char*) command);
 }
