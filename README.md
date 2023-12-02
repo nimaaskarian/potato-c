@@ -11,18 +11,15 @@ A no BS pomodoro timer for GNU/Linux operating systems.
 [Configuration](#configuration) •
 [Integrations](#third-party-integrations)
 
-% Include a video of it in action in polybar (low height video) %
+https://github.com/MiliAxe/potato-c/assets/88832088/c448536a-d717-49f1-bc0d-7a7d65235c1b
 
-% Include a video of it in action in waybar (low height video)%
-
-% Include a video of it in action in dwm (low height video)%
 </div>
 
 ## Introduction
-% Write briefly about what inspired you to write potato-c %
+The Pomodoro method has made me very efficient and fast when doing my daily tasks, but all the pomodoro timer applications that existed, sucked in a way in my opinion. So I started Potato-c. Potato-c is a server-client application, inspired by many similar applications like mpd-mpc-ncmpc, I tried to keep the application simple, modular and as efficiant on resources as possible, so its kinda inspired by dwm and other [suckless](https://suckless.org) tools. But this doesn't make the application miss on any features that a pomodoro timer may need.
 
 ## The Pomodoro method
-This method is about breaking your tasks into small intervals so you don't get zoned out from not having enough TikTok videos.
+This method is about breaking your tasks into small intervals so you don't get zoned out from not having enough TikTok videos. This can be very good for homeworks and tasks of your job, University or school that you are not really into.
 
 ## Why potato-c
 This program's base idea is from [Tomato.C](https://github.com/gabrielzschmitz/Tomato.C), "a pure C pomodoro timer",
@@ -81,7 +78,20 @@ sudo make clean install
 ```
 
 ## Usage
-Refer to man pages for full documentation. If I do a documentation in here, I will likely forget to update it.
+Some features that potato-c has, and you may want to use them.
+### Controlling (Pausing, etc)
+Even though the `potd` (potato-deamon) itself isn't able to get any inputs from the user, it can be controlled by `potctl` and `potui`. This control can be pausing, skipping, resetting, adding to timer, adding to pomodoros etc.
+
+### To-do list
+`potui` binary has a to-do list. The to-do list data is from [calcurse](https://www.calcurse.org/)'s to-do files; But potato-c doesn't depend on calcurse by any means. The to-do capabilites are limited compared to calcurse, for example you can't add notes to your todos with potato-c, but notes can be added and viewed with calcurse if you want it.
+
+### Commands on events
+Specify a list of commands in config.h that will be ran for each event (pomodoro start, short break start, long break start).
+
+### Using another computer as your server
+You can use another computer in your local network as your pomodoro server. You can't really control it, but you can view the timer. Refer to `man potctl` for further details.
+
+If you want more information, please refer to the man pages. If I do a documentation in here, I will likely forget to update it.
 Just after installation, use the commands below to read the docs.
 ```shell
 man potd
@@ -94,16 +104,21 @@ Since this program is modular and simple, adding information about timers to you
 straight-forward process:
 
 ### Polybar
-% Write instructions on how to edit the configuration %
-% Include a video/picture of it in action %
+```ini
+[module/potato]
+type = custom/script
+exec = "potd -f"
+tail = true
+```
 
 ### Waybar
-% Write instructions on how to edit the configuration %
-% Include a video/picture of it in action %
+```json
+"custom/potato": {
+    "exec": "potd -fN"
+},
+```
 
-### dwmblocks
-% Write instructions on how to edit the configuration %
-% Include a video/picture of it in action %
+This is of course, a very minimal implementation. You could add more with click events and `potctl` to make the bar module work like a charm.
 
 ## Contributing
-% You may want to write notes about people who want to contribute to the project %
+Code as modular as possible. I'm still learning, so thats the only suggestion and rule I can have for contributors.
