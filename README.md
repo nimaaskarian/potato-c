@@ -1,22 +1,23 @@
 <div align="center">
 
-# Potato-c 
+# potato-c 
 ![GitHub top language](https://img.shields.io/github/languages/top/nimaaskarian/potato-c?color=orange)
 ![AUR version](https://img.shields.io/aur/version/potato-c?logo=archlinux)
 
-A no BS pomodoro timer for GNU/Linux operating systems.
+
+A no BS pomodoro timer for GNU/Linux operating distributions, that will make you faster without making your hardware go slow.
 
 [Getting started](#getting-started) •
 [Installation](#installation) •
 [Configuration](#configuration) •
 [Integrations](#third-party-integrations)
 
-https://github.com/MiliAxe/potato-c/assets/88832088/c448536a-d717-49f1-bc0d-7a7d65235c1b
+![potato-c in waybar](https://github.com/nimaaskarian/potato-c/assets/88832088/ecb5d7fd-f3cd-4cb1-8478-bc9425bc92da)
 
 </div>
 
 ## Introduction
-The Pomodoro method has made me very efficient and fast when doing my daily tasks, but all the pomodoro timer applications that existed, sucked in a way in my opinion. So I started Potato-c. Potato-c is a server-client application, inspired by many similar applications like mpd-mpc-ncmpc, I tried to keep the application simple, modular and as efficiant on resources as possible, so its kinda inspired by dwm and other [suckless](https://suckless.org) tools. But this doesn't make the application miss on any features that a pomodoro timer may need.
+The Pomodoro method has made me very efficient and fast when doing my daily tasks, but all the pomodoro timer applications that existed, sucked in a way in my opinion. So I started coding potato-c. potato-c is a server-client application, inspired by many similar applications like mpd-mpc-ncmpc, I tried to keep the application simple, modular and as efficiant on resources as possible, so its kinda inspired by dwm and other [suckless](https://suckless.org) tools. But this doesn't make the application miss on any features that a pomodoro timer may need.
 
 ## The Pomodoro method
 This method is about breaking your tasks into small intervals so you don't get zoned out from not having enough TikTok videos. This can be very good for homeworks and tasks of your job, University or school that you are not really into.
