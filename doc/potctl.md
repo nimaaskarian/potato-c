@@ -5,7 +5,7 @@
 potctl - potato-c control
 
 # SYNOPSIS
-potctl [-cputqsidIDrT1 *index*(no index means all)] [-l] [+FORMAT{%b%t%B%p}] [-aA *ADDRESS*:*PORT*]
+potctl [+FORMAT{%b%t%B%p}] [-cputqsidIDrT1 *index*(no index means all)] [-l] [-aA *ADDRESS*:*PORT*]
 
 # DESCRIPTION
 potctl is the commandline controller of potato-c.
@@ -59,7 +59,8 @@ If run with no options, it will do the same thing as using **-l**.
 : lists all the available daemons. Same effect as running without any arguments.
 
 **+FORMAT**
-: specify format string. Read *potd(1)*'s *FORMAT* section for more information.
+: specify format string. note that in *potctl*, you have to specify the format string as the first argument (or don't specify at all).
+Read *potd(1)*'s *FORMAT* section for more information.
 
 **-a *ADDRESS*:*PORT***
 : specify a server address and port to connect to and see the output of the timer of. Prints the output only one time.

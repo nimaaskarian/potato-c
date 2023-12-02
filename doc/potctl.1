@@ -21,8 +21,8 @@
 potctl - potato-c control
 .SH SYNOPSIS
 .PP
-potctl [-cputqsidIDrT1 \f[I]index\f[R](no index means all)] [-l]
-[+FORMAT{%b%t%B%p}] [-aA \f[I]ADDRESS\f[R]:\f[I]PORT\f[R]]
+potctl [+FORMAT{%b%t%B%p}] [-cputqsidIDrT1 \f[I]index\f[R](no index
+means all)] [-l] [-aA \f[I]ADDRESS\f[R]:\f[I]PORT\f[R]]
 .SH DESCRIPTION
 .PP
 potctl is the commandline controller of potato-c.
@@ -84,6 +84,8 @@ Same effect as running without any arguments.
 .TP
 \f[B]+FORMAT\f[R]
 specify format string.
+note that in \f[I]potctl\f[R], you have to specify the format string as
+the first argument (or don\[cq]t specify at all).
 Read \f[I]potd(1)\f[R]\[cq]s \f[I]FORMAT\f[R] section for more
 information.
 .TP
