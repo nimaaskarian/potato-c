@@ -378,6 +378,7 @@ void handle_input_todos_menu(TodosMenuArgs *args)
     case 'w':
       set_todos_changed(FALSE, args->size);
       Todo_array_write_to_file(args->todos, args->size);
+      Todo_array_remove_done(args->todos, &args->size);
       ncurses_clear_todos(args->nc_size);
       args->nc_size = get_todos_scroll_size(args->size);
       Todo_array_print_ncurses(args->todos, args->nc_size);
