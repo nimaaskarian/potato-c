@@ -9,6 +9,7 @@
 
 #include "../include/timer.h"
 #include "../include/client.h"
+#include "../include/utils.h"
 #include "../include/todo.h"
 #include "../include/ncurses-utils.h"
 
@@ -224,7 +225,6 @@ int get_todos_scroll_size(int real_todos_size)
   return min(getmaxy(stdscr)-TODOS_START-1, real_todos_size);
 }
 
-#define MAX_TODOS 40
 typedef struct {
   int ch;
   int index;

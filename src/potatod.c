@@ -37,6 +37,7 @@ void quit(int signum)
 
   if (signum == SIGQUIT)
     exit(0);
+  printf("%d\n", signum);
   exit(1);
 }
 
@@ -173,8 +174,6 @@ void initialize_app()
 
 void reset_signal_handler()
 {
-  initialize_app();
-
   Timer_initialize(&timer);
   Timer_set_seconds_based_on_type(&timer);
 
@@ -254,6 +253,16 @@ void decrease_pomodoro_count_signal_handler()
 
 void assign_signals_to_handlers()
 {
+  signal(SIG_PAUSE, pause_signal_handler);
+  signal(SIG_UNPAUSE, unpause_signal_handler);
+  signal(SIG_TPAUSE, toggle_pause_signal_handler);
+  signal(SIG_SKIP, skip_signal_handler);
+  signal(SIG_INC_10SEC, increase_10sec_signal_handler);
+  signal(SIG_DEC_10SEC, decrease_10sec_signal_handler);
+  signal(SIG_INC_POMODORO_COUNT, increase_pomodoro_count_signal_handler);
+  signal(SIG_DEC_POMODORO_COUNT, decrease_pomodoro_count_signal_handler);
+  signal(SIG_RESET, reset_signal_handler);
+
   signal(SIGINT, quit);
   signal(SIGILL, quit);
   signal(SIGABRT, quit);
@@ -267,15 +276,6 @@ void assign_signals_to_handlers()
   signal(SIGALRM, quit);
 
 
-  signal(SIG_PAUSE, pause_signal_handler);
-  signal(SIG_UNPAUSE, unpause_signal_handler);
-  signal(SIG_TPAUSE, toggle_pause_signal_handler);
-  signal(SIG_SKIP, skip_signal_handler);
-  signal(SIG_INC_10SEC, increase_10sec_signal_handler);
-  signal(SIG_DEC_10SEC, decrease_10sec_signal_handler);
-  signal(SIG_INC_POMODORO_COUNT, increase_pomodoro_count_signal_handler);
-  signal(SIG_DEC_POMODORO_COUNT, decrease_pomodoro_count_signal_handler);
-  signal(SIG_RESET, reset_signal_handler);
 }
 
 

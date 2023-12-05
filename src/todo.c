@@ -15,15 +15,15 @@
 char * Todo_file_path()
 {
   const char* home = getenv("HOME");
-  char *todo_dir = malloc(PATH_MAX*sizeof(char));
-  snprintf(todo_dir, PATH_MAX, "%s/.local/share/calcurse", home);
-  char *todo_path = malloc(PATH_MAX*sizeof(char));
-  snprintf(todo_path, PATH_MAX, "%s/todo", todo_dir);
+  char *todo_dir;
+  asprintf(&todo_dir, "%s/.local/share/calcurse", home);
 
   struct stat st = {0};
   if (stat(todo_dir, &st) == -1) {
     recursive_mkdir(todo_dir);
   }
+  char *todo_path;
+  asprintf(&todo_path, "%s/todo", todo_dir);
   free(todo_dir);
 
   if (stat(todo_path, &st) == -1) {
