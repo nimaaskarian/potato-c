@@ -2,6 +2,8 @@
 #define TODOS_START 5
 #define MAX_MESSAGE 100
 #define MAX_NOTE 100
+#define PRIORITY(x) (x.priority == 0 ? 10: x.priority)
+#define prio(x) PRIORITY(x)
 typedef struct {
   int file_index, priority;
   char note[MAX_NOTE+1], message[MAX_MESSAGE+1];
@@ -20,4 +22,7 @@ void Todo_initialize(Todo *todo);
 int min(int a, int b);
 unsigned int Todo_array_find_index(Todo todo_array[], int size, Todo search);
 int Todo_array_search(Todo haystack[], int size, char * needle, int * matching_indexes);
+int Todo_array_rearrenge_index(Todo todos[], int size, int index);
+void Todo_decrease_priority(Todo * todo);
+void Todo_increase_priority(Todo * todo);
 #endif // TODO_H__

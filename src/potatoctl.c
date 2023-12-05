@@ -9,6 +9,15 @@
 #include "../include/client.h"
 #include "../include/timer.h"
 
+typedef struct {
+  _Bool loop_flag;
+  char server_address[16];
+  int port;
+  char * print_format;
+} App;
+
+App app = {.print_format=NULL};
+
 #define case_index(ch,function) case ch:\
 {\
   int index = EVERY_MEMBER;\
@@ -44,14 +53,13 @@ void get_seconds(char *pid_str, int index)
   printf("%d\n", send_socket_request_return_num(REQ_SECONDS,atoi(pid_str), "127.0.0.1"));
 }
 
-char * print_format = NULL;
 void get_timer_one_time(char *pid_str, int index)
 {
   Timer timer = get_local_timer_from_pid(atoi(pid_str));
   if (timer.type == NULL_TYPE)
     return;
 
-  Timer_print_format(&timer, print_format);
+  Timer_print_format(&timer, app.print_format);
 }
 
 void get_timer_each_second(char *pid_str, int index)
@@ -62,7 +70,7 @@ void get_timer_each_second(char *pid_str, int index)
     if (timer.type == NULL_TYPE)
       break;
 
-    Timer_print_format(&timer, print_format);
+    Timer_print_format(&timer, app.print_format);
     sleep(1);
   }
 }
@@ -75,22 +83,17 @@ void list_all_timers()
   }
 }
 
-int main(int argc, char *argv[])
-{   
+void read_options_to_app(int argc, char *argv[])
+{
   if (argc < 2) {
     list_all_timers();
-    return EXIT_SUCCESS;
+    exit(EXIT_SUCCESS);
   }
-  int ch;
-  Timer timer = {.type=NULL_TYPE};
-  _Bool loop_flag = 0;
-  char server_address[16];
-  int port = 0;
   int shift_from_argv = 0;
-  int status = read_format_from_string(argv[1], &print_format);
+  int status = read_format_from_string(argv[1], &app.print_format);
   if (status == EXIT_SUCCESS)
     shift_from_argv = 1;
-
+  int ch;
   while ((ch = getopt(argc-shift_from_argv, argv+shift_from_argv,
                       "1::T::S::c::lu::L::s::p::t::q::d::i::I::D::r::a:A:")) != -1) {
     switch (ch) {
@@ -98,9 +101,9 @@ int main(int argc, char *argv[])
         list_all_timers();
       break;
       case 'A':
-        loop_flag = 1;
+        app.loop_flag = 1;
       case 'a': {
-        int status = sscanf(optarg, "%15[^:]:%d", server_address, &port);
+        int status = sscanf(optarg, "%15[^:]:%d", app.server_address, &app.port);
         if (status != 2) {
           puts("Socket address is invalid");
           exit(1);
@@ -123,15 +126,23 @@ int main(int argc, char *argv[])
       case_index('1', get_timer_one_time);
     }
   }
-  if (port) {
+
+}
+
+int main(int argc, char *argv[])
+{   
+  read_options_to_app(argc, argv);
+  Timer timer = {.type=NULL_TYPE};
+
+  if (app.port) {
     while (1) {
-      timer = get_timer_from_port(port,server_address);
+      timer = get_timer_from_port(app.port,app.server_address);
       if (timer.type == NULL_TYPE) {
         puts("There is no timer on the specified address");
         exit(EXIT_FAILURE);
       }
-      Timer_print_format(&timer, print_format);
-      if (!loop_flag )
+      Timer_print_format(&timer, app.print_format);
+      if (!app.loop_flag )
         break;
       sleep(1);
     } 

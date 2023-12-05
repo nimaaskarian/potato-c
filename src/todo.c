@@ -34,6 +34,104 @@ char * Todo_file_path()
 
   return todo_path;
 }
+
+extern inline _Bool Todos_are_in_row(Todo prev, Todo current, Todo next)
+{
+  // next is bigger and prev is smaller
+  return prio(current) < prio(next) && prio(current) >= prio(prev);
+}
+
+extern inline _Bool Todo_is_index_arrenged(Todo todos[], int size, int index)
+{
+  #define next_bigger (prio(todos[index]) <= prio(todos[index+1]))
+  #define prev_smaller (prio(todos[index]) >= prio(todos[index-1]))
+  if (index == 0) {
+    return next_bigger;
+  }
+  if (index == size-1) {
+    return prev_smaller;
+  }
+  return next_bigger && prev_smaller;
+}
+
+extern inline int Todo_array_shift_from_to(Todo todos[], int size, int from, int to)
+{
+  if (from > size || to > size)
+    return from;
+  if (from < 0)
+    return 0;
+
+  int i;
+  if (from < to)
+    for (i = from; i < to; i++) {
+      Todo tmp = todos[i];
+      todos[i] = todos[i+1];
+      todos[i+1] = tmp;
+    }
+  else
+    for (i = from; i > to+1; i--) {
+      Todo tmp = todos[i];
+      todos[i] = todos[i-1];
+      todos[i-1] = tmp;
+    }
+  return i;
+}
+
+int Todo_array_rearrenge_index(Todo todos[], int size, int index)
+{
+  if (Todo_is_index_arrenged(todos, size, index))
+    return index;
+
+  Todo *current = &todos[index];
+  // edge case of being first index
+  if (prio((*current)) < prio(todos[0])) {
+    Todo_array_shift_from_to(todos, size, index, -1);
+    return 0;
+  }
+  
+  int low, high, middle_shift = 0;
+  if (prio((*current)) > prio(todos[index+1])) {
+    low = index+1;
+    high = size - 1;
+  } else {
+    low = 0;
+    high = index-1;
+    middle_shift = 1;
+  }
+  int middle;
+  while (low <= high) {
+    middle = low+(high-low)/2;
+    if (Todos_are_in_row(todos[middle], *current, todos[middle+1])) {
+      break;
+    }
+    if (prio((*current)) >= prio(todos[middle])) {
+      low = middle + 1;
+    } else {
+      high = middle - 1;
+    }
+  }
+  middle = Todo_array_shift_from_to(todos, size, index, middle);
+  return middle;
+}
+
+extern inline void Todo_decrease_priority(Todo * todo)
+{
+  if (todo->priority == 0)
+    return;
+  if (todo->priority == 9)
+    todo->priority = 0;
+  else
+    todo->priority++;
+}
+extern inline void Todo_increase_priority(Todo * todo)
+{
+  if (todo->priority == 1)
+    return;
+  if (todo->priority == 0)
+    todo->priority = 9;
+  else
+    todo->priority--;
+}
  
 void Todo_remove_array_index(Todo todos[], int *size, int index)
 {
@@ -79,7 +177,6 @@ void Todo_array_bubble_sort_priority(Todo todos[], int size)
 
 void Todo_array_insertion_sort_priority(Todo todos[], int size)
 {
-  #define PRIORITY(x) (x.priority == 0 ? 10: x.priority)
   for (int i = 1; i < size; i++) {
     int j = i - 1;
     Todo current = todos[i];
@@ -136,7 +233,7 @@ unsigned int Todo_array_read_from_file(Todo todos[])
   }
   free(line);
 
-  Todo_array_bubble_sort_priority(todos, output);
+  Todo_array_insertion_sort_priority(todos, output);
 
   return output;
 }
