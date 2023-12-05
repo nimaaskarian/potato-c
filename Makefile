@@ -43,7 +43,7 @@ $(OBJ)/%.odeb: $(SRC)/%.c
 
 all: options ${BINS_PATHS}
 
-docs: ${MD_DOCS}
+doc: ${MD_DOCS}
 	for man in ${MD_DOCS}; do \
 		pandoc $$man -s -t man -o $${man/.md}.1; \
 	done

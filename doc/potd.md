@@ -5,7 +5,7 @@
 potd - potato-c daemon
 
 # SYNOPSIS
-potd [-fnpNs] [+*FORMAT*{%b%t%B%p}]
+potd [-fnpNs] [+*FORMAT*{%b%t%B%p%f}]
 
 # DESCRIPTION
 potd is the daemon application of potato-c. This is the core. The two other binaries just control and connect to these application. The time left of your timer, counts of your pomodoros, and some formatting strings specifed in config.h at the time of compilation are printed in the stdout. This makes potd to even get called directly inside your bar. Of course, this would restart your timer every time you restart your bar.
