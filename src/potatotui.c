@@ -321,7 +321,7 @@ void handle_input_todos_menu(TodosMenuArgs *args)
         break;
       args->size++;
       set_todos_changed(TRUE, args->size);
-      Todo_array_insertion_sort_priority(args->todos, args->size);
+      args->index = Todo_array_rearrenge_index(args->todos, args->size, args->size-1);
       Todo_array_print_ncurses(args->todos, args->size);
       ncurses_change_color_line(TODOS_START+args->index, 1);
       break;

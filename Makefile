@@ -118,7 +118,7 @@ clean:
 
 uninstall:
 	for bin in ${BINS_PATHS}; do \
-		rm ${DESTDIR}${PREFIX}/bin/$$bin
+		rm ${DESTDIR}${PREFIX}/bin/$$(basename $$bin); \
 	done
 
 	for man_page in ${MAN_PAGES}; do \
