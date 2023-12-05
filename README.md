@@ -27,23 +27,25 @@ This program's base idea is from [Tomato.C](https://github.com/gabrielzschmitz/T
 which after trying to fork it, the ideas behind it seemed problematic to me.  
 This program tries to be able to run on a potato (as the name suggests)
 - Blazingly fast and efficient
-- Is modular and simple
-- It is based on POSIX Philosophy, does one thing and one thing only.
+- Modular and simple
+- Based on POSIX Philosophy, does one thing, but is good at it.
 
 ## Installation 
+
+### Manually building (recommended)
+You can use make/git to build and install the package for yourself like so:
+```shell
+git clone https://github.com/nimaaskarian/potato-c
+cd potato-c
+sudo make install
+```
+This is the recommended way as you can change the `config.h`.
 ### Arch Linux (AUR)
 You can install [potato-c from the AUR](https://aur.archlinux.org/packages/potato-c).
 
 You may use an AUR helper like yay to automate the process:
 ```
 yay -S potato-c
-```
-### Manually building
-You can use make/git to build and install the package for yourself like so:
-```shell
-git clone https://github.com/nimaaskarian/potato-c
-cd potato-c
-sudo make install
 ```
 
 ## Getting started
