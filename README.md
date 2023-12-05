@@ -5,7 +5,7 @@
 ![AUR version](https://img.shields.io/aur/version/potato-c?logo=archlinux)
 
 
-A no BS pomodoro timer for GNU/Linux operating distributions, that will make you faster without making your hardware go slow.
+A featureful, modular and fast pomodoro timer with server-client structure, written in C, that will make you faster without making your hardware go slow.
 
 [Getting started](#getting-started) •
 [Installation](#installation) •
