@@ -12,9 +12,6 @@
 #include "../include/todo.h"
 #include "../include/ncurses-utils.h"
 
-char * server_address = "127.0.0.1";
-char * print_format = NULL;
-
 int handle_input_character_common(int ch)
 {
   switch (ch) {
