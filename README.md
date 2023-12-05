@@ -57,11 +57,12 @@ In order to quickly set up a timer, do the following:
 ```bash
 potd                # Starts a potato-c daemon (writes current remaining time to stdout by default)
 
-potctl              # Get the status of the daemon
-potctl -p           # Pauses the timer            
-potctl -u           # Unpauses the timer            
-potctl -t           # Toggle pauses the timer            
-potctl -r           # Resets the timer             
+# in another terminal
+potctl              # Get the status of your daemon(s)
+potctl -p           # Pauses the timer
+potctl -u           # Unpauses the timer
+potctl -t           # Toggle pauses the timer
+potctl -r           # Resets the timer
 
 potui               # Launch the TUI
 ```
@@ -75,8 +76,10 @@ Make sure to recompile the project once you edit the configuration file for the 
 effect:
 
 ```
-sudo make clean install
+sudo make install
 ```
+
+Of course, you can change the `PREFIX` variable inside `config.mk` to change the installation directory.
 
 ## Usage
 Some features that potato-c has, and you may want to use them.
