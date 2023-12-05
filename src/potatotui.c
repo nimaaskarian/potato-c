@@ -297,7 +297,8 @@ void handle_input_todos_menu(TodosMenuArgs *args)
       args->index = args->searched_todos[args->searched_todos_index];
     break;
     case 'J': {
-        Todo_decrease_priority(&args->todos[args->index]);
+        if (Todo_decrease_priority(&args->todos[args->index])==EXIT_FAILURE)
+          break;
 
         args->index = Todo_array_rearrenge_index(args->todos, args->size,args->index);
         Todo_array_print_ncurses(args->todos, args->nc_size);
@@ -306,7 +307,8 @@ void handle_input_todos_menu(TodosMenuArgs *args)
         break;
       }
     case 'K': {
-        Todo_increase_priority(&args->todos[args->index]);
+        if (Todo_increase_priority(&args->todos[args->index]) == EXIT_FAILURE)
+          break;
           
         args->index = Todo_array_rearrenge_index(args->todos, args->size,args->index);
         Todo_array_print_ncurses(args->todos, args->nc_size);

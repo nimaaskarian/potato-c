@@ -35,6 +35,14 @@ char * Todo_file_path()
   return todo_path;
 }
 
+void Todo_array_remove_done(Todo todos[], int *size)
+{
+  for (int i = 0; i < *size; i++) {
+    if (todos[i].done)
+       Todo_remove_array_index(todos, size, i);
+  }
+}
+
 extern inline _Bool Todos_are_in_row(Todo prev, Todo current, Todo next)
 {
   // next is bigger and prev is smaller
@@ -114,23 +122,25 @@ int Todo_array_rearrenge_index(Todo todos[], int size, int index)
   return middle;
 }
 
-extern inline void Todo_decrease_priority(Todo * todo)
+extern inline int Todo_decrease_priority(Todo * todo)
 {
   if (todo->priority == 0)
-    return;
+    return EXIT_FAILURE;
   if (todo->priority == 9)
     todo->priority = 0;
   else
     todo->priority++;
+  return EXIT_SUCCESS;
 }
-extern inline void Todo_increase_priority(Todo * todo)
+extern inline int Todo_increase_priority(Todo * todo)
 {
   if (todo->priority == 1)
-    return;
+    return EXIT_FAILURE;
   if (todo->priority == 0)
     todo->priority = 9;
   else
     todo->priority--;
+  return EXIT_SUCCESS;
 }
  
 void Todo_remove_array_index(Todo todos[], int *size, int index)

@@ -23,6 +23,7 @@ int min(int a, int b);
 unsigned int Todo_array_find_index(Todo todo_array[], int size, Todo search);
 int Todo_array_search(Todo haystack[], int size, char * needle, int * matching_indexes);
 int Todo_array_rearrenge_index(Todo todos[], int size, int index);
-void Todo_decrease_priority(Todo * todo);
-void Todo_increase_priority(Todo * todo);
+int Todo_decrease_priority(Todo * todo);
+int Todo_increase_priority(Todo * todo);
+void Todo_array_remove_done(Todo todos[], int *size);
 #endif // TODO_H__
