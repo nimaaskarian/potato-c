@@ -34,7 +34,7 @@ void Timer_pause(Timer * timer);
 void Timer_unpause(Timer * timer);
 void Timer_toggle_pause(Timer * timer);
 void Timer_print_before_time(Timer timer);
-char * Timer_resolve_format(Timer *timer, char const *format, char output[4096]);
+char * Timer_resolve_format(Timer *restrict timer, char const *format);
 const char * Timer_before_time(TimerType type);
 void Timer_print_format(Timer *timer, const char * format);
 void read_format_from_optind(int argc, char *argv[], char ** output_str);

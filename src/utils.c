@@ -50,20 +50,19 @@ void send_notification(char *title, char *description)
 {
   if (title == NULL && description == NULL)
     return;
-  int max_command_length = 512;
 
-  #define PRINTF_TO_COMMAND snprintf((char*) command, max_command_length,"notify-send -a potato-c -h string:x-canonical-private-synchronous:potato-c-%d "
-  char command[max_command_length];
+  char * command;
 
   if (title == NULL)
-    PRINTF_TO_COMMAND"'' '%s' &> /dev/null &disown",getpid(), description);
-  else if (description == NULL)
-    PRINTF_TO_COMMAND"'%s' '' &> /dev/null &disown",getpid(), title);
-  else
-    PRINTF_TO_COMMAND"'%s' '%s' &> /dev/null &disown",getpid(), title, description);
+    title = "";
+  if (description == NULL)
+    description = "";
 
+  asprintf(&command, "notify-send -a potato-c -h string:x-canonical-private-synchronous:potato-c-%d  '%s' '%s'", getpid(), title,description);
+  puts(command);
 
   (void)system((char*) command);
+  free(command);
 }
 
 size_t int_length(int number)

@@ -38,10 +38,10 @@ void write_sock_port_to_pid_file(int pid, int sock_port)
   if (sock_port == NO_PORT)
     return;
   FILE *fptr;
-  char path[PATH_MAX];
-  get_pid_file_path(pid, path);
+  char *path = get_pid_file_path(pid);
 
   fptr = fopen(path, "w");
+  free(path);
   fprintf(fptr, "%d", sock_port);
   fclose(fptr);
 }
@@ -64,10 +64,10 @@ int next_available_sock_port()
 int read_sock_port_from_pid_file(int pid)
 {
   FILE *fptr;
-  char path[PATH_MAX];
-  get_pid_file_path(pid, path);
+  char *path = get_pid_file_path(pid);
 
   fptr = fopen(path, "r");
+  free(path);
   if (!fptr)
     return NO_PORT;
   int sock_port;

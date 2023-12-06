@@ -137,11 +137,11 @@ char * Timer_time_left(Timer *restrict timer)
     size_t size_of_hours = int_length(hours);
     size+=size_of_hours+1;
   }
-  char * output = malloc(sizeof(char) * size);
+  char * output;
   if (hours) {
-    snprintf(output, size, "%02u:%02u:%02u", hours, minutes, seconds);
+    asprintf(&output, "%02u:%02u:%02u", hours, minutes, seconds);
   } else {
-    snprintf(output, size, "%02u:%02u", minutes, seconds);
+    asprintf(&output, "%02u:%02u", minutes, seconds);
   }
 
   return output;
@@ -150,26 +150,25 @@ char * Timer_time_left(Timer *restrict timer)
 static char *
 Timer_format_character(Timer *restrict timer, char format_char)
 {
-  char *str = malloc(sizeof(char)*101);
+  char *str;
   switch (format_char) {
     case 't':
-      free(str);
       return Timer_time_left(timer);
     case 'p':
-      snprintf(str,100, "%d", timer->pomodoro_count);
+      asprintf(&str, "%d", timer->pomodoro_count);
     break;
     case 'f':
       fflush(stdout);
-      strcpy(str, "");
+      asprintf(&str, "");
     break;
     case 'b':
-      snprintf(str,100, "%s", Timer_before_time(timer->type));
+      asprintf(&str, "%s", Timer_before_time(timer->type));
     break;
     case 'B':
-      snprintf(str,100, "%s", BEFORE_POMODORO_COUNT_STRING);
+      asprintf(&str,"%s", BEFORE_POMODORO_COUNT_STRING);
     break;
     case '%':
-      strcpy(str, "%");
+      asprintf(&str, "%%");
     break;
     default:
       errno = 1;
@@ -180,14 +179,15 @@ Timer_format_character(Timer *restrict timer, char format_char)
   return str;
 }
 
-char * Timer_resolve_format(Timer *restrict timer, char const *format, char output[4096])
+char * Timer_resolve_format(Timer *restrict timer, char const *format)
 {
+  char * output = "";
   int output_index = 0;
   // variable of format current pointer is fmt_ptr
   for (char const *fmt_ptr = format; *fmt_ptr; fmt_ptr++) {
     if (fmt_ptr[0] == '%') {
       char *string_formated = Timer_format_character(timer,fmt_ptr[1]);
-      output_index += snprintf(&output[output_index],4096-output_index, "%s", string_formated);
+      output_index += asprintf(&output,"%s%s", output,string_formated);
       free(string_formated);
       fmt_ptr++;
     } else {
@@ -200,9 +200,9 @@ char * Timer_resolve_format(Timer *restrict timer, char const *format, char outp
 
 void Timer_print_format(Timer *restrict timer, const char * format)
 {
-  char str[4096];
-  Timer_resolve_format(timer, format, str);
+  char * str = Timer_resolve_format(timer, format);
   puts(str);
+  free(str);
 }
 
 // This method DOES NOT flush the output afterwards.

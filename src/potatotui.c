@@ -13,6 +13,17 @@
 #include "../include/todo.h"
 #include "../include/ncurses-utils.h"
 
+typedef struct {
+  int ch;
+  int index;
+  int size;
+  // int nc_size;
+  Todo todos[MAX_TODOS];
+  int search_indexes[MAX_TODOS];
+  int search_size;
+  int search_index;
+}TodosMenuArgs;
+
 int handle_input_character_common(int ch)
 {
   switch (ch) {
@@ -154,11 +165,11 @@ const char * get_type_string(TimerType type)
 }
 
 
-void fix_selected_index_and_highlight(int * selected_index, int todos_size)
+void fix_and_highlight_index(TodosMenuArgs *args)
 {
-  while (*selected_index >= todos_size && *selected_index > 0)
-    (*selected_index)--;
-  ncurses_change_color_line(TODOS_START+*selected_index, 1);
+  while (args->index >= nc_todo_size(args->size) && args->index > 0)
+    args->index--;
+  ncurses_change_color_line(TODOS_START+args->index, 1);
 }
 
 _Bool todos_changed;
@@ -220,29 +231,83 @@ Todo get_todo_from_user(Todo * defaultTodoPtr, int * status_output)
   return todo;
 }
 
-int get_todos_scroll_size(int real_todos_size)
+void go_to_next_search(TodosMenuArgs *args)
 {
-  return min(getmaxy(stdscr)-TODOS_START-1, real_todos_size);
+  if (args->search_size == 0) {
+    args->search_index = -1;
+    return;
+  }
+
+  while (args->search_indexes[args->search_index] < args->index) {
+    if (args->search_index >= args->search_size) {
+      args->search_index = 0;
+      break;
+    }
+    args->search_index++;
+  }
+  args->index = args->search_indexes[args->search_index];
+  fix_and_highlight_index(args);
 }
 
-typedef struct {
-  int ch;
-  int index;
-  int size;
-  int nc_size;
-  Todo todos[MAX_TODOS];
-  int searched_todos[MAX_TODOS];
-  int searched_todos_size;
-  int searched_todos_index;
-}TodosMenuArgs;
+void add_to_search(TodosMenuArgs * args, int add)
+{
+  args->search_index+=add;
+  if (args->search_index >= args->search_size) {
+    args->search_index = 0;
+  }
+  if (args->search_index < 0) {
+    args->search_index = args->search_size-1;
+  }
+  args->index = args->search_indexes[args->search_index];
+}
+
+void update_changes_todos_nc(TodosMenuArgs *args)
+{
+  Todo_array_print_ncurses(args->todos, args->size);
+  ncurses_change_color_line(TODOS_START+args->index, 1);
+  set_todos_changed(TRUE, args->size);
+}
+
+void change_priority(TodosMenuArgs *args, int handler(Todo *))
+{
+  int status = handler(&args->todos[args->index]);
+  if (status == EXIT_FAILURE) return;
+
+  args->index = Todo_array_reorder_index(args->todos, args->size,args->index);
+  update_changes_todos_nc(args);
+}
+
+void todo_toggle_done(TodosMenuArgs * args) 
+{
+  attron(COLOR_PAIR(1));
+  if (args->todos[args->index].done) {
+    args->todos[args->index].done = 0;
+    mvprintw(TODOS_START+(args->index), 1, " ");
+  } else {
+    args->todos[args->index].done = 1;
+    mvprintw(TODOS_START+(args->index), 1, "x");
+  }
+  attroff(COLOR_PAIR(1));
+}
+
+void fix_index(TodosMenuArgs * args)
+{
+  if (args->index < 0)
+    args->index = 0;
+  int nc_size = nc_todo_size(args->size);
+  if (args->index >= nc_size)
+    args->index = 0;
+  if (args->index < 0) {
+    args->index = nc_size-1 < 0 ? 0 : nc_size-1;
+  }
+}
 
 void handle_input_todos_menu(TodosMenuArgs *args)
 {
   switch(args->ch) {
     case KEY_RESIZE:
-      args->nc_size = get_todos_scroll_size(args->size);
-      Todo_array_print_ncurses(args->todos, args->nc_size);
-      fix_selected_index_and_highlight(&args->index, args->nc_size);
+      Todo_array_print_ncurses(args->todos, args->size);
+      fix_and_highlight_index(args);
     break;
     case 'k':
       args->index--;
@@ -257,147 +322,83 @@ void handle_input_todos_menu(TodosMenuArgs *args)
       ncurses_getnstr_default_vimode(search_term, MAX_MESSAGE, NULL);
       ncurses_unready_for_input();
       ncurses_clear_line(MAX_Y);
-      args->searched_todos_size = 
-        Todo_array_search(args->todos, args->size,
-                          search_term,args->searched_todos);
-      if (args->searched_todos_size != 0) {
-        args->searched_todos_index = 0;
-        while (args->searched_todos[args->searched_todos_index] < args->index) {
-          if (args->searched_todos_index >= args->searched_todos_size) {
-            args->searched_todos_index = 0;
-            break;
-          }
-          args->searched_todos_index++;
-        }
-        args->index = args->searched_todos[args->searched_todos_index];
-      } else {
-        args->searched_todos_index = -1;
-      }
+      args->search_size = Todo_array_search(args->todos, args->size, search_term,args->search_indexes);
+      go_to_next_search(args);
     }
     break;
     case 'n':
-      if (args->searched_todos_size == 0)
-        break;
-      args->searched_todos_index++;
-      if (args->searched_todos_index >= args->searched_todos_size) {
-        args->searched_todos_index = 0;
-      }
-      args->index = args->searched_todos[args->searched_todos_index];
+      add_to_search(args, 1);
     break;
     case 'N':
-      if (args->searched_todos_size == 0)
-        break;
-      args->searched_todos_index--;
-      if (args->searched_todos_index < 0) {
-        args->searched_todos_index = args->searched_todos_size-1;
-      }
-      args->index = args->searched_todos[args->searched_todos_index];
+      add_to_search(args, -1);
     break;
-    case 'J': {
-        if (Todo_decrease_priority(&args->todos[args->index])==EXIT_FAILURE)
-          break;
-
-        args->index = Todo_array_rearrenge_index(args->todos, args->size,args->index);
-        Todo_array_print_ncurses(args->todos, args->nc_size);
-        ncurses_change_color_line(TODOS_START+args->index, 1);
-        set_todos_changed(TRUE, args->size);
-        break;
-      }
-    case 'K': {
-        if (Todo_increase_priority(&args->todos[args->index]) == EXIT_FAILURE)
-          break;
-          
-        args->index = Todo_array_rearrenge_index(args->todos, args->size,args->index);
-        Todo_array_print_ncurses(args->todos, args->nc_size);
-        ncurses_change_color_line(TODOS_START+args->index, 1);
-        set_todos_changed(TRUE, args->size);
-        break;
-      }
+    case 'J':
+      change_priority(args, Todo_decrease_priority);
+    break;
+    case 'K':
+      change_priority(args, Todo_increase_priority);
+    break;
     case 'a': {
       int status;
       args->todos[args->size] = get_todo_from_user(NULL, &status);
-      if (status != EXIT_SUCCESS)
-        break;
+      if (status == EXIT_FAILURE) return;
+
       args->size++;
-      set_todos_changed(TRUE, args->size);
-      args->index = Todo_array_rearrenge_index(args->todos, args->size, args->size-1);
-      Todo_array_print_ncurses(args->todos, args->size);
-      ncurses_change_color_line(TODOS_START+args->index, 1);
+      args->index = Todo_array_reorder_index(args->todos, args->size, args->size-1);
+      update_changes_todos_nc(args);
       break;
     }
     case 'e': {
       int status;
       args->todos[args->index] = get_todo_from_user(&args->todos[args->index], &status);
-      if (status != EXIT_SUCCESS)
-        break;
+      if (status == EXIT_FAILURE) return;
 
-      args->index = Todo_array_rearrenge_index(args->todos, args->size,args->index);
-      Todo_array_print_ncurses(args->todos, args->nc_size);
-      ncurses_change_color_line(TODOS_START+args->index, 1);
-      set_todos_changed(TRUE, args->size);
+      args->index = Todo_array_reorder_index(args->todos, args->size,args->index);
+      update_changes_todos_nc(args);
       break;
     }
     case 'd':
-      ncurses_clear_todos(args->nc_size);
+      ncurses_clear_todos(args->size);
       Todo_remove_array_index(args->todos,&args->size, args->index);
-      args->nc_size = get_todos_scroll_size(args->size);
-      Todo_array_print_ncurses(args->todos, args->nc_size);
-      fix_selected_index_and_highlight(&args->index, args->nc_size);
-      set_todos_changed(TRUE, args->size);
+      update_changes_todos_nc(args);
     break;
     case '\n':
-      if (args->nc_size == 0)
+      if (args->size == 0)
         break;
-      attron(COLOR_PAIR(1));
-      if (args->todos[args->index].done) {
-        args->todos[args->index].done = 0;
-        mvprintw(TODOS_START+(args->index), 1, " ");
-      } else {
-        args->todos[args->index].done = 1;
-        mvprintw(TODOS_START+(args->index), 1, "x");
-      }
+      todo_toggle_done(args);
 
-      attroff(COLOR_PAIR(1));
       set_todos_changed(TRUE, args->size);
       args->index++;
     break;
     case 'R':
-      ncurses_clear_lines_from_to(TODOS_START, TODOS_START+args->nc_size);
+      ncurses_clear_todos(args->size);
       args->size = Todo_array_read_from_file(args->todos);
       set_todos_changed(FALSE, args->size);
-      args->nc_size = get_todos_scroll_size(args->size);
-      Todo_array_print_ncurses(args->todos, args->nc_size);
+      Todo_array_print_ncurses(args->todos, args->size);
       mvprintw(MAX_Y, 0, "Read from file");
-      fix_selected_index_and_highlight(&args->index, args->nc_size);
-      refresh();
-      ncurses_sleep_and_clear_line(2, MAX_Y);
+      fix_and_highlight_index(args);
     break;
     case 'w':
-      set_todos_changed(FALSE, args->size);
       Todo_array_write_to_file(args->todos, args->size);
       Todo_array_remove_done(args->todos, &args->size);
-      ncurses_clear_todos(args->nc_size);
-      args->nc_size = get_todos_scroll_size(args->size);
-      Todo_array_print_ncurses(args->todos, args->nc_size);
+
+      ncurses_clear_todos(args->size);
+      set_todos_changed(FALSE, args->size);
+      Todo_array_print_ncurses(args->todos, args->size);
       mvprintw(MAX_Y, 0, "Wrote to file");
-      fix_selected_index_and_highlight(&args->index, args->nc_size);
+      fix_and_highlight_index(args);
     break;
     case ':':
       ncurses_clear_line(MAX_Y);
     break;
     case 'G':
-      args->index = args->nc_size-1 < 0 ? 0 : args->nc_size-1;
+      args->index = args->size-1;
     break;
     case 'g':
       args->index = 0;
     break;
   }
-  args->nc_size = get_todos_scroll_size(args->size);
-  if (args->index >= args->nc_size)
-    args->index = 0;
-  if (args->index < 0) {
-    args->index = args->nc_size-1 < 0 ? 0 : args->nc_size-1;
-  }
+  fix_index(args);
 }
 void printw_timer_return_last_type(Timer timer, TimerType *last_type)
 {
@@ -469,13 +470,12 @@ void start_timer_loop_on_thread()
   pthread_create(&timer_thread, NULL, get_and_print_local_timer, NULL);
 
   TodosMenuArgs todo_menu_args;
-  todo_menu_args.searched_todos_index = -1;
+  todo_menu_args.search_index = -1;
   todo_menu_args.size = Todo_array_read_from_file(todo_menu_args.todos);
-  todo_menu_args.nc_size = get_todos_scroll_size(todo_menu_args.size);;
-  todo_menu_args.searched_todos_size = 0;
+  todo_menu_args.search_size = 0;
   set_todos_changed(FALSE, todo_menu_args.size);
 
-  Todo_array_print_ncurses(todo_menu_args.todos, todo_menu_args.nc_size);
+  Todo_array_print_ncurses(todo_menu_args.todos, todo_menu_args.size);
 
   // int selected_index = 0;
   todo_menu_args.index = 0;

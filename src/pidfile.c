@@ -13,9 +13,11 @@
 
 #include "../include/pidfile.h"
 
-void get_pid_file_path(int pid, char pid_path[PATH_MAX])
+char * get_pid_file_path(int pid)
 {
-  snprintf(pid_path, PATH_MAX, "%s/%d", POTATO_PIDS_DIRECTORY, pid);
+  char * output;
+  asprintf(&output, "%s/%d", POTATO_PIDS_DIRECTORY, pid);
+  return output;
 }
 void create_pid_file(int pid)
 {
@@ -24,18 +26,18 @@ void create_pid_file(int pid)
     mkdir(POTATO_PIDS_DIRECTORY, 0700);
   }
 
-  char pid_path[PATH_MAX];
-  get_pid_file_path(pid, pid_path);
+  char *pid_path = get_pid_file_path(pid);
 
   FILE* file_ptr = fopen(pid_path, "w");
+  free(pid_path);
   fclose(file_ptr);
 }
 
 void remove_pid_file(int pid)
 {
-  char pid_path[PATH_MAX];
-  get_pid_file_path(pid, pid_path);
+  char*pid_path = get_pid_file_path(pid);
 
   remove(pid_path);
+  free(pid_path);
 }
 

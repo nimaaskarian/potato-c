@@ -4,7 +4,7 @@
 
 #define POTATO_PIDS_DIRECTORY "/tmp/potato-c"
 
-void get_pid_file_path(int pid, char output[PATH_MAX]);
+char * get_pid_file_path(int pid);
 void create_pid_file(int pid);
 void remove_pid_file(int pid);
 #endif // PIDFILE_H__

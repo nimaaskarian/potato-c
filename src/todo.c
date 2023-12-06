@@ -85,7 +85,7 @@ extern inline int Todo_array_shift_from_to(Todo todos[], int size, int from, int
   return i;
 }
 
-int Todo_array_rearrenge_index(Todo todos[], int size, int index)
+int Todo_array_reorder_index(Todo todos[], int size, int index)
 {
   if (Todo_is_index_arrenged(todos, size, index))
     return index;
@@ -255,9 +255,13 @@ unsigned int Todo_array_read_from_file(Todo todos[])
 //     mvprintw(TODOS_START+i, 0,"[%c] [%d] %s\n", is_done_ch, todos[i].priority, todos[i].message);
 //   }
 // }
+int nc_todo_size(int size)
+{
+  return min(getmaxy(stdscr)-TODOS_START-1, size);
+}
 void Todo_array_print_ncurses(Todo todos[], int size)
 {
-  for (int i = 0; i < size; i++) {
+  for (int i = 0; i < nc_todo_size(size); i++) {
     int is_done_ch = todos[i].done ? 'x' : ' ';
     mvprintw(TODOS_START+i, 0,"[%c] [%d] %s\n", is_done_ch, todos[i].priority, todos[i].message);
   }
@@ -330,9 +334,9 @@ void Todo_array_write_to_file(Todo todos[], int todos_size)
 
 }
 
-void ncurses_clear_todos(int todos_size)
+void ncurses_clear_todos(int size)
 {
-  for (int i = TODOS_START; i < TODOS_START+todos_size; i++) {
+  for (int i = TODOS_START; i < TODOS_START+nc_todo_size(size); i++) {
     move(i, 0);
     clrtoeol();
   }

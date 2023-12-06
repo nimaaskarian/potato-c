@@ -267,15 +267,12 @@ void assign_signals_to_handlers()
   signal(SIGILL, quit);
   signal(SIGABRT, quit);
   signal(SIGFPE, quit);
-  signal(SIGSEGV, quit);
   signal(SIGTERM, quit);
   signal(SIGQUIT, quit);
   signal(SIGTRAP, quit);
   signal(SIGKILL, quit);
   signal(SIGPIPE, quit);
   signal(SIGALRM, quit);
-
-
 }
 
 
@@ -340,7 +337,6 @@ void *run_sock_server_thread(void *arg)
     sscanf(buffer, "%d", &req);
 
     char * message;
-    size_t message_len;
     int number;
     switch (req) {
       case REQ_SECONDS: {
@@ -359,23 +355,16 @@ void *run_sock_server_thread(void *arg)
         number = timer.paused;
         break;
       }
-      case REQ_TIMER_FULL: {
-        message_len = int_length(timer.type)+int_length(timer.seconds)+int_length(timer.pomodoro_count)+int_length(timer.paused)+4;
-        message = malloc(message_len*sizeof(char));
-        snprintf(message, message_len, "%d-%d-%d-%d", timer.seconds, timer.pomodoro_count, timer.paused, timer.type);
-        send(new_socket, message, message_len, 0);
-        close(new_socket);
-      }
     }
-    if (req != REQ_TIMER_FULL) {
-      message_len = int_length(number)+1;
-      message = malloc(message_len*sizeof(char));
-      snprintf(message, message_len, "%d", number);
-
-      send(new_socket, message, message_len, 0);
-      close(new_socket);
+    size_t message_size;
+    if (req == REQ_TIMER_FULL) {
+      message_size = asprintf(&message, "%d-%d-%d-%d", timer.seconds, timer.pomodoro_count, timer.paused, timer.type);
+    } else {
+      message_size = asprintf(&message, "%d", number);
     }
+    send(new_socket, message, message_size, 0);
     free(message);
+    close(new_socket);
   }
   pthread_exit(EXIT_SUCCESS);
 }
