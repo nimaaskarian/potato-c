@@ -11,6 +11,7 @@ void ncurses_ready_for_input();
 void ncurses_unready_for_input();
 void ncurses_sleep_and_clear_line(int sleep, int y);
 int ncurses_getnstr_default_vimode(char * src, const int tmp_max ,char * def);
+char getch_mvprintf(int y, int x,char * format, ...);
 #define MAX_Y getmaxy(stdscr)-1
 
 #endif // __NCURSES_UTILS_H

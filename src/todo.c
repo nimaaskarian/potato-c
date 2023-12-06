@@ -7,8 +7,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <ncurses.h>
-
 #include "../include/todo.h"
 #include "../include/utils.h"
 
@@ -162,29 +160,6 @@ int Todo_array_search(Todo haystack[], int size, char * needle, int matching_ind
   return indexes_size;
 }
 
-void Todo_array_bubble_sort_priority(Todo todos[], int size)
-{
-  _Bool swapped;
-  for (int i = 0; i < size-1; i++) {
-    swapped = 0;
-    for (int j = 0; j < size - i - 1; j++){
-      if (todos[j+1].priority == 0)
-        continue;
-      if (todos[j].priority == 0) {
-        Todo_swap(&todos[j], &todos[j+1]);
-        swapped = 1;
-        continue;
-      }
-      if (todos[j].priority > todos[j+1].priority) {
-        Todo_swap(&todos[j], &todos[j+1]);
-        swapped = 1;
-      }
-    }
-    if (!swapped)
-      break;
-  }
-}
-
 void Todo_array_insertion_sort_priority(Todo todos[], int size)
 {
   for (int i = 1; i < size; i++) {
@@ -205,6 +180,12 @@ void Todo_swap(Todo *t1, Todo *t2)
   *t1 = *t2;
   *t2 = temp_t;
 }
+
+void Todo_toggle_done(Todo *todo)
+{
+  todo->done = !todo->done;
+}
+
 
 unsigned int Todo_array_read_from_file(Todo todos[])
 {
@@ -232,7 +213,7 @@ unsigned int Todo_array_read_from_file(Todo todos[])
     }
     if (is_enabled != '-') {
       int priority = is_enabled - '0';
-      todos[output].done = FALSE;
+      todos[output].done = false;
       todos[output].priority = priority;
       strcpy(todos[output].message, todo);
       strcpy(todos[output].note, note);
@@ -246,25 +227,6 @@ unsigned int Todo_array_read_from_file(Todo todos[])
   Todo_array_insertion_sort_priority(todos, output);
 
   return output;
-}
-
-// void Todo_array_print_ncurses(Todo todos[], int size, int start)
-// {
-//   for (int i = start; i < size-start; i++) {
-//     int is_done_ch = todos[i].done ? 'x' : ' ';
-//     mvprintw(TODOS_START+i, 0,"[%c] [%d] %s\n", is_done_ch, todos[i].priority, todos[i].message);
-//   }
-// }
-int nc_todo_size(int size)
-{
-  return min(getmaxy(stdscr)-TODOS_START-1, size);
-}
-void Todo_array_print_ncurses(Todo todos[], int size)
-{
-  for (int i = 0; i < nc_todo_size(size); i++) {
-    int is_done_ch = todos[i].done ? 'x' : ' ';
-    mvprintw(TODOS_START+i, 0,"[%c] [%d] %s\n", is_done_ch, todos[i].priority, todos[i].message);
-  }
 }
 
 #define MAX_CHAR 1000
@@ -334,19 +296,11 @@ void Todo_array_write_to_file(Todo todos[], int todos_size)
 
 }
 
-void ncurses_clear_todos(int size)
-{
-  for (int i = TODOS_START; i < TODOS_START+nc_todo_size(size); i++) {
-    move(i, 0);
-    clrtoeol();
-  }
-}
-
 void Todo_initialize(Todo *todo)
 {
   todo->priority = 0;
   todo->file_index = -1;
-  todo->done = 0;
+  todo->done = false;
   strcpy(todo->note,"");
   strcpy(todo->message,"");
 }

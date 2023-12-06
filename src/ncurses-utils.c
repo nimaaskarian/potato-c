@@ -22,6 +22,18 @@ void ncurses_initialize_screen()
   ncurses_unready_for_input();
 }
 
+char getch_mvprintf(int y, int x,char * format, ...)
+{
+  ncurses_ready_for_input();
+  va_list args;
+  va_start(args,format);
+  mvprintw(y, x, format, args);
+  va_end(args);
+  char ch = getch();
+  ncurses_unready_for_input();
+  return ch;
+}
+
 void ncurses_change_color_line(int line, int color_pair)
 {
   move(line, 0);
