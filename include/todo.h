@@ -1,7 +1,8 @@
 #ifndef TODO_H__
 #include <stdbool.h>
+#include <stdio.h>
 #define TODOS_START 5
-#define MAX_MESSAGE 100
+#define MAX_MESSAGE BUFSIZ-1
 #define MAX_NOTE 100
 #define MAX_TODOS 40
 #define PRIORITY(x) (x.priority == 0 ? 10: x.priority)
