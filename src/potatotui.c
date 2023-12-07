@@ -268,7 +268,9 @@ void start_timer_loop_on_thread()
       break;
 
     handle_input_timer(ch);
+    nodelay(stdscr, FALSE);
     nc_todos_input(&todo_args);
+    nodelay(stdscr, TRUE);
 
     napms(1000 / 60);
   }

@@ -49,13 +49,24 @@ void highlight(TodosMenuArgs * args)
   ncurses_change_color_line(TODOS_START+args->index-args->start, 1);
 }
 
-void set_start_and_highlight(TodosMenuArgs *args)
+void set_start(TodosMenuArgs *args)
 {
   int nc_size = nc_todo_size(args->size);
-  int prior_start = args->start;
-  args->start = args->index-nc_size+1;
-  if (args->start < 0)
+  if (args->index >= nc_size && args->index > args->prior_index) {
+    args->start = args->index-nc_size+1;
+  }
+  else if (args->index-args->start < 0) {
+    args->start--;
+  }
+  if (args->index == 0 || args->start < 0 || nc_size == args->size)
     args->start = 0;
+}
+
+void set_start_and_highlight(TodosMenuArgs *args)
+{
+  int prior_start = args->start;
+  set_start(args);
+  int nc_size = nc_todo_size(args->size);
 
   if (prior_start != args->start)
     nc_todos_print(args);
