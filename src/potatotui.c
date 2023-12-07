@@ -258,7 +258,7 @@ void start_timer_loop_on_thread()
   TodoMenuArgs_init(&todo_args);
   set_todos_changed(&todo_args, false);
 
-  nc_todos_print(todo_args.todos, todo_args.size);
+  nc_todos_print(&todo_args);
   ncurses_change_color_line(TODOS_START+todo_args.index, 1);
 
   while(timer_thread_paused == 0) {

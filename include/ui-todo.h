@@ -11,9 +11,10 @@ typedef struct {
   int search_size;
   int search_index;
   bool is_changed;
+  int start;
 } TodosMenuArgs;
 
-void nc_todos_print(Todo todos[], int size);
+void nc_todos_print(TodosMenuArgs * args);
 void nc_todos_clear(int todos_size);
 int nc_todo_size(int size);
 void nc_todos_input(TodosMenuArgs *args);

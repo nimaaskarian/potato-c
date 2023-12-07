@@ -12,6 +12,7 @@ void TodoMenuArgs_init(TodosMenuArgs * args)
   args->search_index = -1;
   args->index = 0;
   args->size = Todo_array_read_from_file(args->todos);
+  args->start = 0;
 }
 
 int nc_todo_size(int size)
@@ -19,11 +20,11 @@ int nc_todo_size(int size)
   return min(getmaxy(stdscr)-TODOS_START-1, size);
 }
 
-void nc_todos_print(Todo todos[], int size)
+void nc_todos_print(TodosMenuArgs * args)
 {
-  for (int i = 0; i < nc_todo_size(size); i++) {
-    int is_done_ch = todos[i].done ? 'x' : ' ';
-    mvprintw(TODOS_START+i, 0,"[%c] [%d] %s\n", is_done_ch, todos[i].priority, todos[i].message);
+  for (int i = args->start; i < nc_todo_size(args->size)+args->start; i++) {
+    int is_done_ch = args->todos[i].done ? 'x' : ' ';
+    mvprintw(TODOS_START+i-args->start, 0,"[%c] [%d] %s\n", is_done_ch, args->todos[i].priority, args->todos[i].message);
   }
 }
 
@@ -34,11 +35,38 @@ void nc_todos_clear(int size)
   }
 }
 
+void fix_index(TodosMenuArgs * args)
+{
+  if (args->index >= args->size)
+    args->index = 0;
+  if (args->index < 0) {
+    args->index = args->size-1 < 0 ? 0 : args->size-1;
+  }
+}
+
+void set_start_and_highlight(TodosMenuArgs *args)
+{
+  int nc_size = nc_todo_size(args->size);
+  int prior_start = args->start;
+  args->start = args->index-nc_size+1;
+  if (args->start < 0)
+    args->start = 0;
+
+  if (prior_start != args->start)
+    nc_todos_print(args);
+
+  if (args->prior_index-args->start != args->index-args->start) {
+    if (args->index-args->start < nc_size)
+      ncurses_change_color_line(TODOS_START+args->index-args->start, 1);
+    if (args->start == prior_start)
+      ncurses_change_color_line(TODOS_START+args->prior_index-prior_start, 0);
+  }
+}
+
 void fix_and_highlight_index(TodosMenuArgs *args)
 {
-  while (args->index >= nc_todo_size(args->size) && args->index > 0)
-    args->index--;
-  ncurses_change_color_line(TODOS_START+args->index, 1);
+  fix_index(args);
+  set_start_and_highlight(args);
 }
 
 void set_todos_changed(TodosMenuArgs * args, bool input)
@@ -64,12 +92,15 @@ void go_to_next_search(TodosMenuArgs *args)
     }
     args->search_index++;
   }
+  if (args->search_index < 0)
+    args->search_index = 0;
   args->index = args->search_indexes[args->search_index];
-  fix_and_highlight_index(args);
 }
 
 void add_to_search(TodosMenuArgs * args, int add)
 {
+  if (args->search_size <= 0)
+    return;
   args->search_index+=add;
   if (args->search_index >= args->search_size) {
     args->search_index = 0;
@@ -82,8 +113,8 @@ void add_to_search(TodosMenuArgs * args, int add)
 
 void update_changes_todos_nc(TodosMenuArgs *args)
 {
-  nc_todos_print(args->todos, args->size);
-  ncurses_change_color_line(TODOS_START+args->index, 1);
+  nc_todos_print(args);
+  set_start_and_highlight(args);
   set_todos_changed(args, true);
 }
 
@@ -107,20 +138,6 @@ void todo_draw_done_char(TodosMenuArgs * args)
   const char *is_done_str = selected_todo(args)->done ? "x" : " ";
   mvprintw(TODOS_START+(args->index), 1, "%s", is_done_str);
   attroff(COLOR_PAIR(1));
-}
-
-void fix_index(TodosMenuArgs * args)
-{
-  int nc_size = nc_todo_size(args->size);
-  if (args->index >= nc_size)
-    args->index = 0;
-  if (args->index < 0) {
-    args->index = nc_size-1 < 0 ? 0 : nc_size-1;
-  }
-  if (args->prior_index != args->index) {
-    ncurses_change_color_line(TODOS_START+args->index, 1);
-    ncurses_change_color_line(TODOS_START+args->prior_index, 0);
-  }
 }
 
 void pause_timer_thread();
@@ -176,7 +193,7 @@ void nc_todos_input(TodosMenuArgs *args)
   args->prior_index = args->index;
   switch(args->ch) {
     case KEY_RESIZE:
-      nc_todos_print(args->todos, args->size);
+      nc_todos_print(args);
       fix_and_highlight_index(args);
     break;
     case 'k':
@@ -200,6 +217,7 @@ void nc_todos_input(TodosMenuArgs *args)
       ncurses_clear_line(MAX_Y);
       args->search_size = Todo_array_search(args->todos, args->size, search_term,args->search_indexes);
       go_to_next_search(args);
+      fix_and_highlight_index(args);
     }
     break;
     case 'n':
@@ -247,7 +265,7 @@ void nc_todos_input(TodosMenuArgs *args)
       nc_todos_clear(args->size);
       args->size = Todo_array_read_from_file(args->todos);
       set_todos_changed(args, false);
-      nc_todos_print(args->todos, args->size);
+      nc_todos_print(args);
       mvprintw(MAX_Y, 0, "Read from file");
       fix_and_highlight_index(args);
     break;
@@ -257,7 +275,7 @@ void nc_todos_input(TodosMenuArgs *args)
 
       nc_todos_clear(args->size);
       set_todos_changed(args, false);
-      nc_todos_print(args->todos, args->size);
+      nc_todos_print(args);
       mvprintw(MAX_Y, 0, "Wrote to file");
       fix_and_highlight_index(args);
     break;
@@ -265,5 +283,5 @@ void nc_todos_input(TodosMenuArgs *args)
       ncurses_clear_line(MAX_Y);
     break;
   }
-  fix_index(args);
+  fix_and_highlight_index(args);
 }
