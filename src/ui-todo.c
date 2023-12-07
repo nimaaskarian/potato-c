@@ -44,6 +44,11 @@ void fix_index(TodosMenuArgs * args)
   }
 }
 
+void highlight(TodosMenuArgs * args)
+{
+  ncurses_change_color_line(TODOS_START+args->index-args->start, 1);
+}
+
 void set_start_and_highlight(TodosMenuArgs *args)
 {
   int nc_size = nc_todo_size(args->size);
@@ -55,9 +60,9 @@ void set_start_and_highlight(TodosMenuArgs *args)
   if (prior_start != args->start)
     nc_todos_print(args);
 
-  if (args->prior_index-args->start != args->index-args->start) {
+  if (args->prior_index-prior_start != args->index-args->start) {
     if (args->index-args->start < nc_size)
-      ncurses_change_color_line(TODOS_START+args->index-args->start, 1);
+      highlight(args);
     if (args->start == prior_start)
       ncurses_change_color_line(TODOS_START+args->prior_index-prior_start, 0);
   }
@@ -268,6 +273,7 @@ void nc_todos_input(TodosMenuArgs *args)
       nc_todos_print(args);
       mvprintw(MAX_Y, 0, "Read from file");
       fix_and_highlight_index(args);
+      highlight(args);
     break;
     case 'w':
       Todo_array_write_to_file(args->todos, args->size);
@@ -278,6 +284,7 @@ void nc_todos_input(TodosMenuArgs *args)
       nc_todos_print(args);
       mvprintw(MAX_Y, 0, "Wrote to file");
       fix_and_highlight_index(args);
+      highlight(args);
     break;
     case ':':
       ncurses_clear_line(MAX_Y);
