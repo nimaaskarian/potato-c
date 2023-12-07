@@ -241,6 +241,12 @@ void nc_todos_input(TodosMenuArgs *args)
     case 'N':
       add_to_search(args, -1);
     break;
+    case 'H':
+      args->index = args->start;
+    break;
+    case 'L':
+      args->index = nc_todo_size(args->size)-1+args->start;
+    break;
     case 'J':
       change_priority(args, Todo_decrease_priority);
     break;

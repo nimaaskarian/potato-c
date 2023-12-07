@@ -199,23 +199,23 @@ unsigned int Todo_array_read_from_file(Todo todos[])
   free(todo_file_path);
   if (fp == NULL)
     return output;
-  char note[4096];
-  char todo[4096];
+  char note[MAX_NOTE];
+  char message[MAX_MESSAGE];
   int index = 0;
   while ((read = getline(&line, &len, fp)) != -1) {
     char is_enabled;
     strcpy(note, "");
-    strcpy(todo, "");
-    int scan_count = sscanf(line,"[%c]>%s %[^\n]",&is_enabled, note, todo);
-    if (!strlen(todo)) {
-      sscanf(line,"[%c] %[^\n]",&is_enabled, todo);
+    strcpy(message, "");
+    int scan_count = sscanf(line,"[%c]>%s %[^\n]",&is_enabled, note, message);
+    if (!strlen(message)) {
+      sscanf(line,"[%c] %[^\n]",&is_enabled, message);
       strcpy(note, "");
     }
     if (is_enabled != '-') {
       int priority = is_enabled - '0';
       todos[output].done = false;
       todos[output].priority = priority;
-      strcpy(todos[output].message, todo);
+      strcpy(todos[output].message, message);
       strcpy(todos[output].note, note);
       todos[output].file_index = index;
       output++;
