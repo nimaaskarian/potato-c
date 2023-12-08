@@ -148,10 +148,8 @@ Todo * selected_todo(TodosMenuArgs * args)
 
 void todo_draw_done_char(TodosMenuArgs * args) 
 {
-  attron(COLOR_PAIR(1));
   const char *is_done_str = selected_todo(args)->done ? "x" : " ";
   mvprintw(TODOS_START+(args->index), 1, "%s", is_done_str);
-  attroff(COLOR_PAIR(1));
 }
 
 void pause_timer_thread();
