@@ -1,5 +1,7 @@
 // Set both notif_title and notif_body to NULL if you want program to have no notifications on event
 
+static const char * notification_basecmd = "herbe '%t' '%d' &> /dev/null & disown";
+
 #define POMODORO_NOTIF_TITLE "Pomodoro"
 #define POMODORO_NOTIF_BODY "Time to focus!"
 

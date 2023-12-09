@@ -147,28 +147,31 @@ char * Timer_time_left(Timer *restrict timer)
   return output;
 }
 
+struct timer_format_handler_args{
+  Timer *restrict timer;
+  char format_char;
+};
+
 static char *
-Timer_format_character(Timer *restrict timer, char format_char)
+Timer_format_character(void *arguments, char format_char)
 {
+  struct timer_format_handler_args * args = arguments;
   char *str;
   switch (format_char) {
     case 't':
-      return Timer_time_left(timer);
+      return Timer_time_left(args->timer);
     case 'p':
-      asprintf(&str, "%d", timer->pomodoro_count);
+      asprintf(&str, "%d", args->timer->pomodoro_count);
     break;
     case 'f':
       fflush(stdout);
       asprintf(&str, "");
     break;
     case 'b':
-      asprintf(&str, "%s", Timer_before_time(timer->type));
+      asprintf(&str, "%s", Timer_before_time(args->timer->type));
     break;
     case 'B':
       asprintf(&str,"%s", BEFORE_POMODORO_COUNT_STRING);
-    break;
-    case '%':
-      asprintf(&str, "%%");
     break;
     default:
       errno = 1;
@@ -181,22 +184,28 @@ Timer_format_character(Timer *restrict timer, char format_char)
 
 char * Timer_resolve_format(Timer *restrict timer, char const *format)
 {
-  char * output = "";
-  int output_index = 0;
-  // variable of format current pointer is fmt_ptr
-  for (char const *fmt_ptr = format; *fmt_ptr; fmt_ptr++) {
-    if (fmt_ptr[0] == '%') {
-      char *string_formated = Timer_format_character(timer,fmt_ptr[1]);
-      output_index += asprintf(&output,"%s%s", output,string_formated);
-      free(string_formated);
-      fmt_ptr++;
-    } else {
-      output[output_index] = fmt_ptr[0];
-      output_index += 1;
-    }
-  }
-  return output;
+  struct timer_format_handler_args args = {.timer = timer };
+  return resolve_format(format,Timer_format_character, &args);
 }
+
+// char * Timer_resolve_format(Timer *restrict timer, char const *format)
+// {
+//   char * output = "";
+//   int output_index = 0;
+//   // variable of format current pointer is fmt_ptr
+//   for (char const *fmt_ptr = format; *fmt_ptr; fmt_ptr++) {
+//     if (fmt_ptr[0] == '%') {
+//       char *string_formated = Timer_format_character(timer,fmt_ptr[1]);
+//       output_index += asprintf(&output,"%s%s", output,string_formated);
+//       free(string_formated);
+//       fmt_ptr++;
+//     } else {
+//       output[output_index] = fmt_ptr[0];
+//       output_index += 1;
+//     }
+//   }
+//   return output;
+// }
 
 void Timer_print_format(Timer *restrict timer, const char * format)
 {

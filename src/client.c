@@ -148,9 +148,8 @@ int connect_socket(int port, char * server_address)
 char * send_req_return_str(SocketRequest req, int sockfd)
 {
   char *buffer = malloc(sizeof(char)*1024);
-  size_t size = int_length(req)+1;
   char* request;
-  asprintf(&request, "%d",req);
+  size_t size = asprintf(&request, "%d",req);
 
   send(sockfd, request, size, 0);
   free(request);

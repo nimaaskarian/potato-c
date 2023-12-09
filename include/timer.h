@@ -39,5 +39,4 @@ const char * Timer_before_time(TimerType type);
 void Timer_print_format(Timer *timer, const char * format);
 void read_format_from_optind(int argc, char *argv[], char ** output_str);
 int read_format_from_string(char*input_str,char ** output_str);
-void Timer_test_format_good(char const *format);
 #endif
