@@ -48,13 +48,13 @@ void Timer_set_seconds_based_on_type(Timer *restrict timer)
   float minutes;
   switch (timer->type) {
     case POMODORO_TYPE:
-      minutes = POMODORO_MINUTES;
+      minutes = pomodoro_minutes;
     break;
     case SHORT_BREAK_TYPE:
-      minutes = SHORT_BREAK_MINUTES;
+      minutes = short_break_minutes;
     break;
     case LONG_BREAK_TYPE:
-      minutes = LONG_BREAK_MINUTES;
+      minutes = long_break_minutes;
     break;
   }
   timer->seconds = minutes*SECONDS_IN_MINUTES;
@@ -83,7 +83,7 @@ void Timer_cycle_type(Timer *restrict timer)
 void Timer_initialize(Timer *restrict timer)
 {
   timer->paused = 0;
-  timer->pomodoro_count = POMODORO_COUNT;
+  timer->pomodoro_count = pomodoro_count;
   timer->type = POMODORO_TYPE;
 }
 
@@ -100,7 +100,7 @@ void read_format_from_optind(int argc, char *argv[], char ** output_str)
     }
   }
   if (*output_str == NULL)
-    *output_str = DEFAULT_FORMAT;
+    *output_str = timer_format;
 }
 
 int read_format_from_string(char*input_str,char ** output_str)
@@ -109,7 +109,7 @@ int read_format_from_string(char*input_str,char ** output_str)
     *output_str = input_str+1;
   }
   if (*output_str == NULL) {
-    *output_str = DEFAULT_FORMAT;
+    *output_str = timer_format;
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
@@ -170,9 +170,6 @@ Timer_format_character(void *arguments, char format_char)
     case 'b':
       asprintf(&str, "%s", Timer_before_time(args->timer->type));
     break;
-    case 'B':
-      asprintf(&str,"%s", BEFORE_POMODORO_COUNT_STRING);
-    break;
     default:
       errno = 1;
       perror("Format character not defined");
@@ -232,21 +229,19 @@ const char * Timer_before_time(TimerType type)
 {
   switch (type) {
     case POMODORO_TYPE:
-      if (POMODORO_BEFORE_TIME_STRING != NULL)
-        return POMODORO_BEFORE_TIME_STRING;
+      if (pomodoro_before_time != NULL)
+        return pomodoro_before_time;
     break;
     case SHORT_BREAK_TYPE:
-      if (SHORT_BREAK_BEFORE_TIME_STRING != NULL)
-         return SHORT_BREAK_BEFORE_TIME_STRING;
+      if (short_break_before_time != NULL)
+         return short_break_before_time;
     break;
     case LONG_BREAK_TYPE:
-      if (LONG_BREAK_BEFORE_TIME_STRING != NULL)
-        return LONG_BREAK_BEFORE_TIME_STRING;
+      if (long_break_before_time != NULL)
+        return long_break_before_time;
     break;
-    case NULL_TYPE:
-      return "";
-    return "";
   }
+  return "";
 }
 void Timer_print_before_time(Timer timer)
 {

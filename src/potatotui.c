@@ -119,8 +119,7 @@ pid_t pid_selection_menu(int *selected_index)
 
   while (1) {
     int ch = getch();
-    if (input_quit_menu(ch) == QUIT_QUIT)
-      ncurses_quit();
+    if (input_quit_menu(ch) == QUIT_QUIT) ncurses_quit();
     selected_pid = handle_input_pid_menu(ch, selected_index);
 
     if (selected_pid)

@@ -98,15 +98,15 @@ void send_notification_based_on_timertype(TimerType type)
 {
   switch (type) {
     case POMODORO_TYPE:
-      send_notification(POMODORO_NOTIF_TITLE, POMODORO_NOTIF_BODY);
+      send_notification(pomodoro_notif);
       break;
 
     case SHORT_BREAK_TYPE: 
-      send_notification(SHORT_BREAK_NOTIF_TITLE, SHORT_BREAK_NOTIF_BODY);
+      send_notification(short_break_notif);
       break;
 
     case LONG_BREAK_TYPE: 
-      send_notification(LONG_BREAK_NOTIF_TITLE, LONG_BREAK_NOTIF_BODY);
+      send_notification(long_break_notif);
       break;
   }
 }
@@ -188,7 +188,7 @@ void pause_signal_handler()
   pause_timer_run_cmds();
   if (!app.notification)
     return;
-  send_notification(PAUSED_NOTIF_TITLE, PAUSED_NOTIF_BODY);
+  send_notification(paused_notif);
 }
 
 void unpause_signal_handler()
@@ -196,7 +196,7 @@ void unpause_signal_handler()
   unpause_timer_run_cmds();
   if (!app.notification)
     return;
-  send_notification(UNPAUSED_NOTIF_TITLE, UNPAUSED_NOTIF_BODY);
+  send_notification(unpaused_notif);
 }
 
 void toggle_pause_signal_handler()
@@ -209,9 +209,9 @@ void toggle_pause_signal_handler()
   if (!app.notification)
     return;
   if (timer.paused)
-    send_notification(PAUSED_NOTIF_TITLE, PAUSED_NOTIF_BODY);
+    send_notification(paused_notif);
   else 
-    send_notification(UNPAUSED_NOTIF_TITLE, UNPAUSED_NOTIF_BODY);
+    send_notification(unpaused_notif);
 }
 
 void increase_10sec_signal_handler()
@@ -275,10 +275,11 @@ void assign_signals_to_handlers()
   signal(SIGALRM, quit);
 }
 
-
 void *run_sock_server_thread(void *arg)
 {
   int port = next_available_sock_port();
+  remove_pid_file_by_port(port);
+
   write_sock_port_to_pid_file(getpid(), port);
   if (port == NO_PORT) {
     puts("Unable to create socket.");

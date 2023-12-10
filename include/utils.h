@@ -1,8 +1,12 @@
 #ifndef UTILS_H__
 #define UTILS_H__
 #include <stddef.h>
+typedef struct{
+  const char * title;
+  const char * body;
+} notif_t;
 void recursive_mkdir(char *path);
-void send_notification(char *title, char *description);
+void send_notification(notif_t notif);
 size_t int_length(int);
 int min(int a, int b);
 char toggle_lower(char ch);

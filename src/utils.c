@@ -37,8 +37,7 @@ int min(int a, int b)
 }
 
 struct format_notif_args {
-  char * title;
-  char * description;
+  notif_t notif;
   int pid;
 };
 static char *
@@ -48,10 +47,10 @@ format_notification(void *arguments, char format_char)
   char *str;
   switch (format_char) {
     case 't':
-      asprintf(&str, "%s", args->title);
+      asprintf(&str, "%s", args->notif.title);
     break;
-    case 'd':
-      asprintf(&str, "%s", args->description);
+    case 'b':
+      asprintf(&str, "%s", args->notif.body);
     break;
     case 'p':
       asprintf(&str, "%d", args->pid);
@@ -65,18 +64,18 @@ format_notification(void *arguments, char format_char)
   return str;
 }
 
-void send_notification(char *title, char *description)
+void send_notification(notif_t notif)
 {
-  if (title == NULL && description == NULL)
+  if (notif.title == NULL && notif.body == NULL)
     return;
 
-  if (title == NULL)
-    title = "";
-  if (description == NULL)
-    description = "";
+  if (notif.title == NULL)
+    notif.title = "";
+  if (notif.body == NULL)
+    notif.body = "";
 
-  struct format_notif_args args = {.title = title, .description = description, .pid = getpid()};
-  char * command = resolve_format(notification_basecmd, format_notification, &args);
+  struct format_notif_args args = {.notif = notif, .pid = getpid()};
+  char * command = resolve_format(notification_format, format_notification, &args);
 
   (void)system((char*) command);
   free(command);
@@ -93,25 +92,29 @@ size_t int_length(int number)
   return output;
 }
 
-char * resolve_format(char const *format, char * handler(void *, char), void * args)
+char* resolve_format(char const* format, char* handler(void*, char), void* args)
 {
-  char * output = "";
+  int format_length = strlen(format);
+  char* output = malloc((format_length + 1) * sizeof(char));
   int output_index = 0;
-  // variable of format current pointer is fmt_ptr
-  for (char const *fmt_ptr = format; *fmt_ptr; fmt_ptr++) {
+
+  for (char const* fmt_ptr = format; *fmt_ptr; fmt_ptr++) {
     if (fmt_ptr[0] == '%') {
-      char *string_formated;
-      if (fmt_ptr[1] != '%')
-         string_formated = handler(args, fmt_ptr[1]);
-      else
-        asprintf(&string_formated, "%%");
-      output_index = asprintf(&output,"%s%s", output,string_formated);
-      free(string_formated);
-      // add once more, cause the next char was our format char
+      if (fmt_ptr[1] != '%') {
+        char* string_formatted = handler(args, fmt_ptr[1]);
+        int string_length = strlen(string_formatted);
+        memcpy(output + output_index, string_formatted, string_length);
+        output_index += string_length;
+        free(string_formatted);
+      } else {
+        output[output_index++] = '%';
+      }
       fmt_ptr++;
     } else {
-      output_index = asprintf(&output,"%s%c", output, fmt_ptr[0]);
+      output[output_index++] = *fmt_ptr;
     }
   }
+
+  output[output_index] = '\0';
   return output;
 }

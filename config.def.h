@@ -1,30 +1,20 @@
-// Set both notif_title and notif_body to NULL if you want program to have no notifications on event
+#include "include/utils.h"
 
 static const char * notification_basecmd = "herbe '%t' '%d' &> /dev/null & disown";
+static const int pomodoro_count = 4;
 
-#define POMODORO_NOTIF_TITLE "Pomodoro"
-#define POMODORO_NOTIF_BODY "Time to focus!"
+// Set to {NULL, NULL} If you want program to have no notifications on event
+static const notif_t pomodoro_notif     = {.title = "Pomodoro",     .body = "Time to focus!"};
+static const notif_t short_break_notif  = {.title = "Short pause",  .body = "Have a little time for yourself."};
+static const notif_t long_break_notif   = {.title = "Long pause",   .body = "Take a good long break."};
+static const notif_t paused_notif       = {.title = "Paused",       .body = "Timer have been paused."};
+static const notif_t unpaused_notif     = {.title = "Unpaused",     .body = "Timer have been unpaused."};
 
-#define SHORT_BREAK_NOTIF_TITLE "Short pause"
-#define SHORT_BREAK_NOTIF_BODY "Have a little time for yourself."
+static const char * pomodoro_before_time = "PM";
+static const char * short_break_before_time = "SB";
+static const char * long_break_before_time = "LB";
 
-#define LONG_BREAK_NOTIF_TITLE "Long pause" 
-#define LONG_BREAK_NOTIF_BODY "Take a good long break."
-
-
-#define PAUSED_NOTIF_TITLE "Paused" 
-#define PAUSED_NOTIF_BODY "Timer have been paused."
-
-#define UNPAUSED_NOTIF_TITLE "Unpaused" 
-#define UNPAUSED_NOTIF_BODY "Timer have been unpaused."
-
-#define POMODORO_BEFORE_TIME_STRING "PM "
-#define SHORT_BREAK_BEFORE_TIME_STRING "SP "
-#define LONG_BREAK_BEFORE_TIME_STRING "LP "
-
-#define BEFORE_POMODORO_COUNT_STRING " P "
-
-#define POMODORO_COUNT 4
+static const char * timer_format = "%b %t P %p";
 
 #define DISOWN_NULL " &> /dev/null & disown"
 static const char* ON_POMODORO_START_COMMANDS[] = {
@@ -38,6 +28,6 @@ static const char* ON_PAUSE_COMMANDS[] = {
 static const char* ON_UNPAUSE_COMMANDS[] = {
 };
 
-#define POMODORO_MINUTES 25
-#define SHORT_BREAK_MINUTES 5
-#define LONG_BREAK_MINUTES 30
+static const int pomodoro_minutes = 25;
+static const int short_break_minutes = 5;
+static const int long_break_minutes = 30;
