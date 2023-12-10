@@ -23,7 +23,7 @@
 typedef struct {
   _Bool flush, notification;
   _Bool new_line_at_quit, print_pomodoro_count, run_socket;
-  char * format;
+  const char * format;
 } App;
 
 Timer timer;

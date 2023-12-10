@@ -87,7 +87,7 @@ void Timer_initialize(Timer *restrict timer)
   timer->type = POMODORO_TYPE;
 }
 
-void read_format_from_optind(int argc, char *argv[], char ** output_str)
+void read_format_from_optind(int argc, char *argv[], const char ** output_str)
 {
   while (optind < argc) {
     if (argv[optind][0] == '+') {
@@ -103,7 +103,7 @@ void read_format_from_optind(int argc, char *argv[], char ** output_str)
     *output_str = timer_format;
 }
 
-int read_format_from_string(char*input_str,char ** output_str)
+int read_format_from_string(char*input_str,const char ** output_str)
 {
   if (input_str[0] == '+') {
     *output_str = input_str+1;
