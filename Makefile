@@ -9,9 +9,9 @@ DEB = debug
 TESTS_NAME = tests
 SHARED_DIR = shared
 
-SRC_CTL = ${SRC}/potatoctl.c ${SRC}/utils.c ${SRC}/client.c ${SRC}/socket.c ${SRC}/timer.c ${SRC}/pidfile.c
-SRC_D = ${SRC}/timer.c ${SRC}/potatod.c ${SRC}/utils.c ${SRC}/socket.c ${SRC}/pidfile.c
-SRC_TUI = ${SRC}/potatotui.c ${SRC}/timer.c ${SRC}/utils.c ${SRC}/socket.c ${SRC}/client.c ${SRC}/todo.c ${SRC}/ncurses-utils.c ${SRC}/pidfile.c ${SRC}/ui-todo.c
+SRC_CTL = ${SRC}/potctl.c ${SRC}/utils.c ${SRC}/client.c ${SRC}/socket.c ${SRC}/timer.c ${SRC}/pidfile.c
+SRC_D = ${SRC}/timer.c ${SRC}/potd.c ${SRC}/utils.c ${SRC}/socket.c ${SRC}/pidfile.c
+SRC_TUI = ${SRC}/potui.c ${SRC}/timer.c ${SRC}/utils.c ${SRC}/socket.c ${SRC}/client.c ${SRC}/todo.c ${SRC}/ncurses-utils.c ${SRC}/pidfile.c ${SRC}/ui-todo.c
 
 OBJ_CTL = $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRC_CTL))
 OBJ_D = $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRC_D))
