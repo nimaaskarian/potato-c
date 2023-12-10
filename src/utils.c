@@ -40,8 +40,7 @@ struct format_notif_args {
   notif_t notif;
   int pid;
 };
-static char *
-format_notification(void *arguments, char format_char)
+char * format_notification(void *arguments, char format_char)
 {
   struct format_notif_args *args = arguments;
   char *str;
@@ -92,29 +91,43 @@ size_t int_length(int number)
   return output;
 }
 
-char* resolve_format(char const* format, char* handler(void*, char), void* args)
+char* resolve_format(const char * format, char* handler(void*, char), void* args)
 {
-  int format_length = strlen(format);
-  char* output = malloc((format_length + 1) * sizeof(char));
-  int output_index = 0;
+  int format_length = 0;
+  int size = 0;
 
   for (char const* fmt_ptr = format; *fmt_ptr; fmt_ptr++) {
     if (fmt_ptr[0] == '%') {
       if (fmt_ptr[1] != '%') {
         char* string_formatted = handler(args, fmt_ptr[1]);
         int string_length = strlen(string_formatted);
-        memcpy(output + output_index, string_formatted, string_length);
-        output_index += string_length;
         free(string_formatted);
+        size += string_length - 1;
+      }
+      fmt_ptr++;
+    }
+    size++;
+  }
+  char* out = malloc((size) * sizeof(char));
+
+  int index = 0;
+  for (char const* fmt_ptr = format; *fmt_ptr; fmt_ptr++) {
+    if (fmt_ptr[0] == '%') {
+      if (fmt_ptr[1] != '%') {
+        char* string_formatted = handler(args, fmt_ptr[1]);
+        int string_length = strlen(string_formatted);
+        memcpy(out+index, string_formatted, string_length);
+        free(string_formatted);
+        index += string_length;
       } else {
-        output[output_index++] = '%';
+        out[index++] = '%';
       }
       fmt_ptr++;
     } else {
-      output[output_index++] = *fmt_ptr;
+      out[index++] = *fmt_ptr;
     }
   }
 
-  output[output_index] = '\0';
-  return output;
+  out[size] = '\0';
+  return out;
 }

@@ -185,25 +185,6 @@ char * Timer_resolve_format(Timer *restrict timer, char const *format)
   return resolve_format(format,Timer_format_character, &args);
 }
 
-// char * Timer_resolve_format(Timer *restrict timer, char const *format)
-// {
-//   char * output = "";
-//   int output_index = 0;
-//   // variable of format current pointer is fmt_ptr
-//   for (char const *fmt_ptr = format; *fmt_ptr; fmt_ptr++) {
-//     if (fmt_ptr[0] == '%') {
-//       char *string_formated = Timer_format_character(timer,fmt_ptr[1]);
-//       output_index += asprintf(&output,"%s%s", output,string_formated);
-//       free(string_formated);
-//       fmt_ptr++;
-//     } else {
-//       output[output_index] = fmt_ptr[0];
-//       output_index += 1;
-//     }
-//   }
-//   return output;
-// }
-
 void Timer_print_format(Timer *restrict timer, const char * format)
 {
   char * str = Timer_resolve_format(timer, format);
