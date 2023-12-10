@@ -288,10 +288,10 @@ void nc_todos_input(TodosMenuArgs *args)
       mvprintw(MAX_Y, 0, "Read from file");
     break;
     case 'w':
+      nc_todos_clear(args->size);
       Todo_array_write_to_file(args->todos, args->size);
       Todo_array_remove_done(args->todos, &args->size);
 
-      nc_todos_clear(args->size);
       set_todos_changed(args, false);
       nc_todos_print(args);
       mvprintw(MAX_Y, 0, "Wrote to file");
