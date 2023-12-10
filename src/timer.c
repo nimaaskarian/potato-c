@@ -12,12 +12,12 @@
 
 void Timer_pause(Timer *restrict timer)
 {
-  timer->paused = 1;
+  timer->paused = true;
 }
 
 void Timer_unpause(Timer *restrict timer)
 {
-  timer->paused = 0;
+  timer->paused = false;
 }
 
 void Timer_toggle_pause(Timer *restrict timer)
@@ -82,7 +82,7 @@ void Timer_cycle_type(Timer *restrict timer)
 
 void Timer_initialize(Timer *restrict timer)
 {
-  timer->paused = 0;
+  timer->paused = false;
   timer->pomodoro_count = pomodoro_count;
   timer->type = POMODORO_TYPE;
 }

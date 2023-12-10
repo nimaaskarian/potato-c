@@ -10,7 +10,7 @@
 #include "../include/timer.h"
 
 typedef struct {
-  _Bool loop_flag;
+  bool loop_flag;
   char server_address[16];
   int port;
   char * print_format;
@@ -101,7 +101,7 @@ void read_options_to_app(int argc, char *argv[])
         list_all_timers();
       break;
       case 'A':
-        app.loop_flag = 1;
+        app.loop_flag = true;
       case 'a': {
         int status = sscanf(optarg, "%15[^:]:%d", app.server_address, &app.port);
         if (status != 2) {
