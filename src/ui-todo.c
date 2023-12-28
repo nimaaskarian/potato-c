@@ -206,8 +206,8 @@ void nc_todos_input(TodosMenuArgs *args)
   switch(args->ch) {
     case KEY_RESIZE:
       nc_todos_print(args);
+      set_todos_changed(args, args->is_changed);
       ncurses_clear_line(MAX_Y);
-      fix_and_highlight_index(args);
     break;
     case 'k':
       args->index--;
@@ -230,7 +230,6 @@ void nc_todos_input(TodosMenuArgs *args)
       ncurses_clear_line(MAX_Y);
       args->search_size = Todo_array_search(args->todos, args->size, search_term,args->search_indexes);
       go_to_next_search(args);
-      fix_and_highlight_index(args);
     }
     break;
     case 'n':

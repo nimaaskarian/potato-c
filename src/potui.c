@@ -158,21 +158,33 @@ const char * get_type_string(TimerType type)
   }
 }
 
-void printw_timer_return_last_type(Timer timer, TimerType *last_type)
+void printw_timer_return_last_type(Timer timer, TimerType *last_type, WINDOW * win)
 {
   if (!timer.paused || timer.type != *last_type) {
-    ncurses_clear_lines_from_to(0,3);
+    // ncurses_clear_lines_from_to(0,3);
+    werase(win);
     *last_type = timer.type;
   }
   char * time_left_str = Timer_time_left(&timer);
-  mvprintw(0,0, "Time left: %s", time_left_str);
-  mvprintw(1,0, "Pomodoros: %d", timer.pomodoro_count);
+  wprintw(win,"Time left: %s\n", time_left_str);
+  wprintw(win,"Pomodoros: %d\n", timer.pomodoro_count);
   const char * type_string = get_type_string(timer.type);
-  mvprintw(2,0, "Type: %s", type_string);
+  wprintw(win, "Type: %s", type_string);
   free(time_left_str);
+  wrefresh(win);
 }
 
-void *get_and_print_local_timer(void *arg) {
+typedef struct {
+  WINDOW * win;
+} TimerThreadArgs;
+
+void TimerThreadArgs_init(TimerThreadArgs * args)
+{
+  args->win = newwin(3, getmaxx(stdscr), 0, 0);
+}
+
+void *get_and_print_local_timer(void *arguments) {
+  TimerThreadArgs * args = arguments;
   TimerType last_type = NULL_TYPE;
   Timer timer;
   while (1) {
@@ -185,7 +197,7 @@ void *get_and_print_local_timer(void *arg) {
     }
 
     if (!timer_thread_paused) {
-      printw_timer_return_last_type(timer, &last_type);
+      printw_timer_return_last_type(timer, &last_type, args->win);
     }
     napms(1000/2);
   }
@@ -248,11 +260,11 @@ int handle_todos_quit(TodosMenuArgs * args, enum QUIT_MENU quit_status)
   return 0;
 }
 
-void start_timer_loop_on_thread()
+void start_timer_loop_on_thread(TimerThreadArgs * args)
 {
   erase();
   pthread_t timer_thread;
-  pthread_create(&timer_thread, NULL, get_and_print_local_timer, NULL);
+  pthread_create(&timer_thread, NULL, get_and_print_local_timer, args);
 
   TodosMenuArgs todo_args;
   TodoMenuArgs_init(&todo_args);
@@ -281,12 +293,14 @@ int main(int argc, char *argv[])
 {
   ncurses_initialize_screen();
   int selected_index = 0;
+  TimerThreadArgs timer_args;
+  TimerThreadArgs_init(&timer_args);
   while (1) {
     pause_timer_thread();
     pid = pid_selection_menu(&selected_index);
     unpause_timer_thread();
 
-    start_timer_loop_on_thread();
+    start_timer_loop_on_thread(&timer_args);
   }
   return EXIT_SUCCESS;
 }

@@ -1,6 +1,6 @@
 #include "include/utils.h"
 
-static const char * notification_basecmd = "herbe '%t' '%d' &> /dev/null & disown";
+static const char * notification_format = "herbe '%t' '%d' &> /dev/null & disown";
 static const int pomodoro_count = 4;
 
 // Set to {NULL, NULL} If you want program to have no notifications on event
