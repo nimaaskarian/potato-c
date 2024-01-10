@@ -1,6 +1,5 @@
 include config.mk
 
-
 SRC = src
 OBJ = obj
 BIN = bin
