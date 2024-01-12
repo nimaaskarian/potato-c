@@ -89,7 +89,9 @@ Some features that potato-c has, and you may want to use them.
 Even though the `potd` (potato-deamon) itself isn't able to get any inputs from the user, it can be controlled by `potctl` and `potui`. This control can be pausing, skipping, resetting, adding to timer, adding to pomodoros etc.
 
 ### To-do list
-`potui` binary has a to-do list. The to-do list data is from [calcurse](https://www.calcurse.org/)'s to-do files; But potato-c doesn't depend on calcurse by any means. The to-do capabilites are limited compared to calcurse, for example you can't add notes to your todos with potato-c, but notes can be added and viewed with calcurse if you want it.
+**To-do list feature has been removed due to it being not very unix like.**
+
+You can use [c3](https://github.com/nimaaskarian/c3), which is a cross-platform, tree like todo list with calcurse format instead. It has a potato module as well!
 
 ### Commands on events
 Specify a list of commands in config.h that will be ran for each event (pomodoro start, short break start, long break start).
