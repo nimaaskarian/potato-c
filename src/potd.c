@@ -111,21 +111,21 @@ void send_notification_based_on_timertype(TimerType type)
   }
 }
 
+void on_cycle(Timer * restrict timer) {
+  if (!timer->paused)
+    run_before_command_based_on_timertype(timer->type);
+
+  if (app.notification)
+    send_notification_based_on_timertype(timer->type);
+}
 
 void start_app_loop()
 {
   while (1) {
-    if (!timer.seconds) {
-      if (!timer.paused)
-        run_before_command_based_on_timertype(timer.type);
-
-      if (app.notification)
-        send_notification_based_on_timertype(timer.type);
-    }
     if (!timer.paused) {
       print_all();
     }
-    Timer_sleep_reduce_second(&timer);
+    Timer_sleep_reduce_second(&timer, on_cycle);
   }
 }
 

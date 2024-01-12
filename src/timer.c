@@ -31,7 +31,7 @@ void Timer_toggle_pause(Timer *restrict timer)
 // This method has been designed in a way to just be 
 // put inside a loop and just work for you as your timer.
 // You can use `Timer_print_time_left` function afterwards
-void Timer_sleep_reduce_second(Timer *restrict timer)
+void Timer_sleep_reduce_second(Timer *restrict timer, void on_cycle(Timer * restrict))
 {
   sleep(1);
   if (!timer->paused) {
@@ -40,6 +40,8 @@ void Timer_sleep_reduce_second(Timer *restrict timer)
   if (!timer->seconds) {
     Timer_cycle_type(timer);
     Timer_set_seconds_based_on_type(timer);
+    if (on_cycle != NULL)
+      on_cycle(timer);
   }
 }
 
@@ -152,6 +154,20 @@ struct timer_format_handler_args{
   char format_char;
 };
 
+const char * timer_type_string(TimerType type)
+{
+  switch (type) {
+    case NULL_TYPE:
+      return "Invalid";
+    case POMODORO_TYPE:
+      return "Pomodoro";
+    case SHORT_BREAK_TYPE:
+      return "Short break";
+    case LONG_BREAK_TYPE:
+      return "Long break";
+  }
+}
+
 static char *
 Timer_format_character(void *arguments, char format_char)
 {
@@ -162,6 +178,9 @@ Timer_format_character(void *arguments, char format_char)
       return Timer_time_left(args->timer);
     case 'p':
       asprintf(&str, "%d", args->timer->pomodoro_count);
+    break;
+    case 'm':
+      asprintf(&str, "%s", timer_type_string(args->timer->type));
     break;
     case 'f':
       fflush(stdout);

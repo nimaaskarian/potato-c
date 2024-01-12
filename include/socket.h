@@ -10,7 +10,7 @@ typedef enum {
 #define MAX_PORT 65535
 #define MAX_PORT_LENGTH 5
 #define NO_PORT -1
-#define PORT_START 8000
+#define PORT_START 7700
 #define PORT_STEP 1
 
 void write_sock_port_to_pid_file(int pid, int sock_port);

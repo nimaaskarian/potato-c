@@ -10,7 +10,6 @@
 #include "../include/timer.h"
 #include "../include/client.h"
 #include "../include/utils.h"
-#include "../include/ui-todo.h"
 #include "../include/ncurses-utils.h"
 
 enum QUIT_MENU {
@@ -134,29 +133,6 @@ pid_t pid_selection_menu(int *selected_index)
 
 pid_t pid;
 _Bool timer_thread_paused = 0;
-void pause_timer_thread()
-{
-  timer_thread_paused = 1;
-}
-
-void unpause_timer_thread()
-{
-  timer_thread_paused = 0;
-}
-
-const char * get_type_string(TimerType type)
-{
-  switch(type) {
-    case POMODORO_TYPE:
-      return "Pomodoro";
-    case SHORT_BREAK_TYPE:
-      return "Short break";
-    case LONG_BREAK_TYPE:
-      return "Long break";
-    case NULL_TYPE:
-      return "";
-  }
-}
 
 void printw_timer_return_last_type(Timer timer, TimerType *last_type)
 {
@@ -167,32 +143,12 @@ void printw_timer_return_last_type(Timer timer, TimerType *last_type)
   char * time_left_str = Timer_time_left(&timer);
   mvprintw(0,0, "Time left: %s", time_left_str);
   mvprintw(1,0, "Pomodoros: %d", timer.pomodoro_count);
-  const char * type_string = get_type_string(timer.type);
+  const char * type_string = timer_type_string(timer.type);
   mvprintw(2,0, "Type: %s", type_string);
   free(time_left_str);
 }
 
-void *get_and_print_local_timer(void *arg) {
-  TimerType last_type = NULL_TYPE;
-  Timer timer;
-  while (1) {
-    if (pid)
-      timer = get_local_timer_from_pid(pid);
-
-    if (timer.type == NULL_TYPE) {
-      pause_timer_thread();
-      break;
-    }
-
-    if (!timer_thread_paused) {
-      printw_timer_return_last_type(timer, &last_type);
-    }
-    napms(1000/2);
-  }
-	pthread_exit(EXIT_SUCCESS);
-}
-
-void handle_input_timer(int ch)
+int handle_input_timer(int ch)
 {
   switch (ch) {
     case 'p':
@@ -224,57 +180,32 @@ void handle_input_timer(int ch)
     case 'D':
       run_function_on_pid_file_pid(handle_quit, pid);
     break;
-  }
-}
-
-int handle_todos_quit(TodosMenuArgs * args, enum QUIT_MENU quit_status)
-{
-  if (quit_status == QUIT_NONE) 
-    return 0;
-
-  if (args->is_changed) {
-    pause_timer_thread();
-    if (getch_mvprintf(MAX_Y, 0, "Todo changes are not saved. Save? [y/N]: ") == 'y') {
-      Todo_array_write_to_file(args->todos, args->size);
-    }
-    unpause_timer_thread();
-  }
-  switch (quit_status) {
-    case QUIT_ESC:
-      return 1;
-    case QUIT_QUIT:
+    case 'q':
       ncurses_quit();
+    case ESC:
+      return 1;
   }
   return 0;
 }
 
-void start_timer_loop_on_thread()
+void timer_loop()
 {
   erase();
-  pthread_t timer_thread;
-  pthread_create(&timer_thread, NULL, get_and_print_local_timer, NULL);
+  TimerType last_type = NULL_TYPE;
+  Timer timer;
+  while (1) {
+    if (pid)
+      timer = get_local_timer_from_pid(pid);
 
-  TodosMenuArgs todo_args;
-  TodoMenuArgs_init(&todo_args);
-  set_todos_changed(&todo_args, false);
-
-  nc_todos_print(&todo_args);
-  ncurses_change_color_line(TODOS_START+todo_args.index, 1);
-
-  while(timer_thread_paused == 0) {
-    int ch = getch();
-    todo_args.ch = ch;
-    if (handle_todos_quit(&todo_args, input_quit_menu(ch)))
+    if (timer.type == NULL_TYPE) {
       break;
-
-    handle_input_timer(ch);
-    nodelay(stdscr, FALSE);
-    nc_todos_input(&todo_args);
-    nodelay(stdscr, TRUE);
-
-    napms(1000 / 60);
+    }
+    printw_timer_return_last_type(timer, &last_type);
+    napms(1000/3);
+    if (handle_input_timer(getch())) {
+      break;
+    }
   }
-  pthread_cancel(timer_thread);
 }
 
 int main(int argc, char *argv[])
@@ -282,11 +213,9 @@ int main(int argc, char *argv[])
   ncurses_initialize_screen();
   int selected_index = 0;
   while (1) {
-    pause_timer_thread();
     pid = pid_selection_menu(&selected_index);
-    unpause_timer_thread();
 
-    start_timer_loop_on_thread();
+    timer_loop();
   }
   return EXIT_SUCCESS;
 }

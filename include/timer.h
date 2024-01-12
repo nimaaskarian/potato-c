@@ -24,7 +24,7 @@ typedef struct {
   unsigned int pomodoro_count;
 } Timer;
 
-void Timer_sleep_reduce_second(Timer *timer);
+void Timer_sleep_reduce_second(Timer *restrict, void on_cycle(Timer * restrict));
 void Timer_set_seconds_based_on_type(Timer * timer);
 void Timer_cycle_type(Timer * timer);
 void Timer_initialize(Timer *timer);
@@ -39,4 +39,5 @@ const char * Timer_before_time(TimerType type);
 void Timer_print_format(Timer *timer, const char * format);
 void read_format_from_optind(int argc, char *argv[], const char ** output_str);
 int read_format_from_string(char*input_str,const char ** output_str);
+const char * timer_type_string(TimerType type);
 #endif
