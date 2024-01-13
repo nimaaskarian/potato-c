@@ -40,8 +40,7 @@ void Timer_sleep_reduce_second(Timer *restrict timer, void on_cycle(Timer * rest
   if (!timer->seconds) {
     Timer_cycle_type(timer);
     Timer_set_seconds_based_on_type(timer);
-    if (on_cycle != NULL)
-      on_cycle(timer);
+    on_cycle(timer);
   }
 }
 
@@ -84,7 +83,6 @@ void Timer_cycle_type(Timer *restrict timer)
 
 void Timer_initialize(Timer *restrict timer)
 {
-  timer->paused = false;
   timer->pomodoro_count = pomodoro_count;
   timer->type = POMODORO_TYPE;
 }
