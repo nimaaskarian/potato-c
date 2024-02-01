@@ -40,9 +40,10 @@ void printw_pid(char *pid_str, int index)
 typedef struct {
   int length;
   int index;
+  pid_t pid;
 } DrawPidsArgs;
 
-void check_pids_length_and_set_selected(DrawPidsArgs * args)
+void fix_pid_index(DrawPidsArgs * args)
 {
   if (args->index < 0) {
     args->index = args->length ? args->length-1 : 0;
@@ -54,19 +55,17 @@ void check_pids_length_and_set_selected(DrawPidsArgs * args)
   }
 }
 
-pid_t handle_input_pid_menu(int ch, DrawPidsArgs *args)
+pid_t handle_input_pid_menu(DrawPidsArgs *args)
 {
-  if (args->length == 1)
-    return pid_at_index(0);
+  int ch = getch();
+  if (input_quit_menu(ch) == QUIT_QUIT) ncurses_quit();
   pid_t pid = 0;
   switch (ch) {
     case 'j':
       args->index++;
-      check_pids_length_and_set_selected(args);
       break;
     case 'k':
       args->index--;
-      check_pids_length_and_set_selected(args);
       break;
     case 'g':
       args->index = 0;
@@ -86,8 +85,7 @@ pid_t handle_input_pid_menu(int ch, DrawPidsArgs *args)
       pid = pid_at_index(args->index);
     break;
   }
-  if (args->index >= args->length)
-    args->index = args->length ? args->length - 1 : 0;
+  fix_pid_index(args);
   return pid;
 }
 
@@ -108,8 +106,9 @@ void draw_pids(DrawPidsArgs * args)
 void * get_pids_length_sleep(void* arguments)
 {
   DrawPidsArgs * args = arguments;
-  while (1) {
+  while (args->pid == 0) {
     args->length = get_pids_length();
+
     draw_pids(args);
     sleep(2);
   }
@@ -118,25 +117,22 @@ void * get_pids_length_sleep(void* arguments)
 
 pid_t pid_selection_menu(int * init_index)
 {
-  DrawPidsArgs args = {.length = 0, .index = *init_index};
+  DrawPidsArgs args = {.length = get_pids_length(), .index = *init_index};
+    if (args.length == 1)
+      args.pid = pid_at_index(0);
+
   pthread_t get_pids_thread;
   pthread_create(&get_pids_thread, NULL, get_pids_length_sleep, &args);
 
-  pid_t selected_pid;
   draw_pids(&args);
 
-  while (1) {
-    int ch = getch();
-    if (input_quit_menu(ch) == QUIT_QUIT) ncurses_quit();
-    selected_pid = handle_input_pid_menu(ch, &args);
+  while (args.pid == 0) {
+    args.pid = handle_input_pid_menu(&args);
     draw_pids(&args);
-
-    if (selected_pid)
-      break;
   }
   *init_index = args.index;
   pthread_cancel(get_pids_thread);
-  return selected_pid;
+  return args.pid;
 }
 
 int handle_input_timer(int ch, pid_t pid)
@@ -206,9 +202,12 @@ void * get_and_printw_timer(void * arguments)
   while (1) {
     if (args->pid)
       args->timer = get_local_timer_from_pid(args->pid);
+    if (args->timer.type == NULL_TYPE)
+      break;
     printw_timer(args);
     napms(1000/2);
   }
+  pthread_exit(EXIT_SUCCESS);
 }
 
 
@@ -223,6 +222,9 @@ void timer_loop(pid_t pid)
     }
     if (args.pid)
       args.timer = get_local_timer_from_pid(args.pid);
+
+    if (args.timer.type == NULL_TYPE)
+      break;
     printw_timer(&args);
   }
   pthread_cancel(print_timer_thread);
