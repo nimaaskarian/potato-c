@@ -116,9 +116,9 @@ void * get_pids_length_sleep(void* arguments)
   pthread_exit(EXIT_SUCCESS);
 }
 
-pid_t pid_selection_menu()
+pid_t pid_selection_menu(int * init_index)
 {
-  DrawPidsArgs args = {.length = 0, .index = 0};
+  DrawPidsArgs args = {.length = 0, .index = *init_index};
   pthread_t get_pids_thread;
   pthread_create(&get_pids_thread, NULL, get_pids_length_sleep, &args);
 
@@ -134,6 +134,7 @@ pid_t pid_selection_menu()
     if (selected_pid)
       break;
   }
+  *init_index = args.index;
   pthread_cancel(get_pids_thread);
   return selected_pid;
 }
@@ -213,7 +214,6 @@ void * get_and_printw_timer(void * arguments)
 
 void timer_loop(pid_t pid)
 {
-  erase();
   PrintTimerArgs args = {.last_type = NULL_TYPE, .pid = pid};
   pthread_t print_timer_thread;
   pthread_create(&print_timer_thread, NULL, get_and_printw_timer, &args);
@@ -231,8 +231,9 @@ void timer_loop(pid_t pid)
 int main(int argc, char *argv[])
 {
   ncurses_initialize_screen();
+  int init_pid_index = 0;
   while (1) {
-    pid_t pid = pid_selection_menu();
+    pid_t pid = pid_selection_menu(&init_pid_index);
 
     timer_loop(pid);
   }
