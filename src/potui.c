@@ -17,6 +17,7 @@ enum QUIT_MENU {
   QUIT_ESC,
   QUIT_QUIT,
 };
+
 enum QUIT_MENU input_quit_menu(int ch)
 {
   switch (ch) {
@@ -137,10 +138,7 @@ pid_t pid_selection_menu()
   return selected_pid;
 }
 
-pid_t pid;
-_Bool timer_thread_paused = 0;
-
-int handle_input_timer(int ch)
+int handle_input_timer(int ch, pid_t pid)
 {
   switch (ch) {
     case 'p':
@@ -183,6 +181,7 @@ int handle_input_timer(int ch)
 typedef struct {
   Timer timer;
   TimerType last_type;
+  pid_t pid;
 } PrintTimerArgs;
 
 void printw_timer(PrintTimerArgs * args) 
@@ -204,26 +203,26 @@ void * get_and_printw_timer(void * arguments)
 {
   PrintTimerArgs * args = arguments;
   while (1) {
-    if (pid)
-      args->timer = get_local_timer_from_pid(pid);
+    if (args->pid)
+      args->timer = get_local_timer_from_pid(args->pid);
     printw_timer(args);
     napms(1000/2);
   }
 }
 
 
-void timer_loop()
+void timer_loop(pid_t pid)
 {
   erase();
-  PrintTimerArgs args = {.last_type = NULL_TYPE};
+  PrintTimerArgs args = {.last_type = NULL_TYPE, .pid = pid};
   pthread_t print_timer_thread;
   pthread_create(&print_timer_thread, NULL, get_and_printw_timer, &args);
   while (1) {
-    if (handle_input_timer(getch())) {
+    if ( handle_input_timer(getch(), args.pid) ) {
       break;
     }
-    if (pid)
-      args.timer = get_local_timer_from_pid(pid);
+    if (args.pid)
+      args.timer = get_local_timer_from_pid(args.pid);
     printw_timer(&args);
   }
   pthread_cancel(print_timer_thread);
@@ -233,9 +232,9 @@ int main(int argc, char *argv[])
 {
   ncurses_initialize_screen();
   while (1) {
-    pid = pid_selection_menu();
+    pid_t pid = pid_selection_menu();
 
-    timer_loop();
+    timer_loop(pid);
   }
   return EXIT_SUCCESS;
 }
