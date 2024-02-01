@@ -36,96 +36,102 @@ void printw_pid(char *pid_str, int index)
   mvprintw(index, 0, "%s\n", pid_str);
 }
 
-int pids_length_global;
-void check_pids_length_and_set_selected(int *selected_index)
+typedef struct {
+  int length;
+  int index;
+} DrawPidsArgs;
+
+void check_pids_length_and_set_selected(DrawPidsArgs * args)
 {
-  if (*selected_index < 0) {
-    *selected_index = pids_length_global ? pids_length_global-1 : 0;
+  if (args->index < 0) {
+    args->index = args->length ? args->length-1 : 0;
     return;
   }
 
-  if (*selected_index >= pids_length_global)  {
-    *selected_index = 0;
+  if (args->index >= args->length)  {
+    args->index = 0;
   }
 }
 
-pid_t handle_input_pid_menu(int ch, int *selected_index)
+pid_t handle_input_pid_menu(int ch, DrawPidsArgs *args)
 {
-  if (pids_length_global == 1)
+  if (args->length == 1)
     return pid_at_index(0);
   pid_t pid = 0;
   switch (ch) {
     case 'j':
-      (*selected_index)++;
-      check_pids_length_and_set_selected(selected_index);
+      args->index++;
+      check_pids_length_and_set_selected(args);
       break;
     case 'k':
-      (*selected_index)--;
-      check_pids_length_and_set_selected(selected_index);
+      args->index--;
+      check_pids_length_and_set_selected(args);
       break;
     case 'g':
-      *selected_index = 0;
+      args->index = 0;
       break;
     case 'c':
-      run_function_on_pid_file_index(handle_remove_pid, *selected_index);
-      pids_length_global--;
+      run_function_on_pid_file_index(handle_remove_pid, args->index);
+      args->length--;
       break;
     case 'D':
-      run_function_on_pid_file_index(handle_quit, *selected_index);
-      pids_length_global--;
+      run_function_on_pid_file_index(handle_quit, args->index);
+      args->length--;
       break;
     case 'G':
-      *selected_index = pids_length_global-1;
+      args->index = args->length - 1;
       break;
     case '\n':
-      pid = pid_at_index(*selected_index);
+      pid = pid_at_index(args->index);
     break;
   }
-  if (*selected_index >= pids_length_global)
-    *selected_index = pids_length_global ? pids_length_global - 1 : 0;
+  if (args->index >= args->length)
+    args->index = args->length ? args->length - 1 : 0;
   return pid;
 }
 
-void draw_pids(int selected_index)
+void draw_pids(DrawPidsArgs * args)
 {
   erase();
-  if (pids_length_global) {
+  if (args->length) {
     run_function_on_pid_file_index(printw_pid,EVERY_MEMBER);
     attron(COLOR_PAIR(1));
-    run_function_on_pid_file_index(printw_pid,selected_index);
+    run_function_on_pid_file_index(printw_pid,args->index);
     attroff(COLOR_PAIR(1));
   } else {
     mvprintw(0,0, "No daemons found right now.");
   }
+  refresh();
 }
 
-void * get_pids_length_sleep(void* args)
+void * get_pids_length_sleep(void* arguments)
 {
+  DrawPidsArgs * args = arguments;
   while (1) {
-    pids_length_global = get_pids_length();
+    args->length = get_pids_length();
+    draw_pids(args);
     sleep(2);
   }
   pthread_exit(EXIT_SUCCESS);
 }
 
-pid_t pid_selection_menu(int *selected_index)
+pid_t pid_selection_menu()
 {
+  DrawPidsArgs args = {.length = 0, .index = 0};
   pthread_t get_pids_thread;
-  pthread_create(&get_pids_thread, NULL, get_pids_length_sleep, NULL);
+  pthread_create(&get_pids_thread, NULL, get_pids_length_sleep, &args);
 
   pid_t selected_pid;
-  draw_pids(*selected_index);
+  draw_pids(&args);
 
   while (1) {
     int ch = getch();
     if (input_quit_menu(ch) == QUIT_QUIT) ncurses_quit();
-    selected_pid = handle_input_pid_menu(ch, selected_index);
+    selected_pid = handle_input_pid_menu(ch, &args);
+    draw_pids(&args);
 
     if (selected_pid)
       break;
-
-    draw_pids(*selected_index);
-    napms(1000 / 60);
   }
   pthread_cancel(get_pids_thread);
   return selected_pid;
@@ -133,20 +139,6 @@ pid_t pid_selection_menu(int *selected_index)
 
 pid_t pid;
 _Bool timer_thread_paused = 0;
-
-void printw_timer_return_last_type(Timer timer, TimerType *last_type)
-{
-  if (!timer.paused || timer.type != *last_type) {
-    ncurses_clear_lines_from_to(0,3);
-    *last_type = timer.type;
-  }
-  char * time_left_str = Timer_time_left(&timer);
-  mvprintw(0,0, "Time left: %s", time_left_str);
-  mvprintw(1,0, "Pomodoros: %d", timer.pomodoro_count);
-  const char * type_string = timer_type_string(timer.type);
-  mvprintw(2,0, "Type: %s", type_string);
-  free(time_left_str);
-}
 
 int handle_input_timer(int ch)
 {
@@ -188,32 +180,60 @@ int handle_input_timer(int ch)
   return 0;
 }
 
+typedef struct {
+  Timer timer;
+  TimerType last_type;
+} PrintTimerArgs;
+
+void printw_timer(PrintTimerArgs * args) 
+{
+  if (!args->timer.paused || args->timer.type != args->last_type) {
+    ncurses_clear_lines_from_to(0,3);
+    args->last_type = args->timer.type;
+  }
+  char * time_left_str = Timer_time_left(&args->timer);
+  mvprintw(0,0, "Time left: %s", time_left_str);
+  mvprintw(1,0, "Pomodoros: %d", args->timer.pomodoro_count);
+  const char * type_string = timer_type_string(args->timer.type);
+  mvprintw(2,0, "Type: %s", type_string);
+  free(time_left_str);
+  refresh();
+}
+
+void * get_and_printw_timer(void * arguments)
+{
+  PrintTimerArgs * args = arguments;
+  while (1) {
+    if (pid)
+      args->timer = get_local_timer_from_pid(pid);
+    printw_timer(args);
+    napms(1000/2);
+  }
+}
+
+
 void timer_loop()
 {
   erase();
-  TimerType last_type = NULL_TYPE;
-  Timer timer;
+  PrintTimerArgs args = {.last_type = NULL_TYPE};
+  pthread_t print_timer_thread;
+  pthread_create(&print_timer_thread, NULL, get_and_printw_timer, &args);
   while (1) {
-    if (pid)
-      timer = get_local_timer_from_pid(pid);
-
-    if (timer.type == NULL_TYPE) {
-      break;
-    }
-    printw_timer_return_last_type(timer, &last_type);
-    napms(1000/3);
     if (handle_input_timer(getch())) {
       break;
     }
+    if (pid)
+      args.timer = get_local_timer_from_pid(pid);
+    printw_timer(&args);
   }
+  pthread_cancel(print_timer_thread);
 }
 
 int main(int argc, char *argv[])
 {
   ncurses_initialize_screen();
-  int selected_index = 0;
   while (1) {
-    pid = pid_selection_menu(&selected_index);
+    pid = pid_selection_menu();
 
     timer_loop();
   }

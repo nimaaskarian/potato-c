@@ -62,7 +62,7 @@ void ncurses_clear_line(int y)
 void ncurses_ready_for_input()
 {
   // blocking getch/getstr
-  nodelay(stdscr, FALSE);
+  // nodelay(stdscr, FALSE);
   // keypad(stdscr, TRUE);
   curs_set(1);
 }
@@ -373,7 +373,7 @@ int ncurses_getnstr_default_vimode(char * src, const int max_size ,char * def)
 void ncurses_unready_for_input()
 {
   // non blocking getch/getstr
-  nodelay(stdscr, TRUE);
+  // nodelay(stdscr, TRUE);
   // keypad(stdscr, FALSE);
   curs_set(0);
   noecho();
