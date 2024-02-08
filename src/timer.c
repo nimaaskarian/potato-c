@@ -10,17 +10,17 @@
 #include "../include/timer.h"
 #include "../include/utils.h"
 
-void Timer_pause(Timer *restrict timer)
+extern inline void Timer_pause(Timer *restrict timer)
 {
   timer->paused = true;
 }
 
-void Timer_unpause(Timer *restrict timer)
+extern inline void Timer_unpause(Timer *restrict timer)
 {
   timer->paused = false;
 }
 
-void Timer_toggle_pause(Timer *restrict timer)
+extern inline void Timer_toggle_pause(Timer *restrict timer)
 {
   if (timer->paused)
     Timer_unpause(timer);
@@ -31,7 +31,7 @@ void Timer_toggle_pause(Timer *restrict timer)
 // This method has been designed in a way to just be 
 // put inside a loop and just work for you as your timer.
 // You can use `Timer_print_time_left` function afterwards
-void Timer_sleep_reduce_second(Timer *restrict timer, void on_cycle(Timer * restrict))
+extern inline void Timer_sleep_reduce_second(Timer *restrict timer, void on_cycle(Timer * restrict))
 {
   sleep(1);
   if (!timer->paused) {
@@ -44,7 +44,7 @@ void Timer_sleep_reduce_second(Timer *restrict timer, void on_cycle(Timer * rest
   }
 }
 
-void Timer_set_seconds_based_on_type(Timer *restrict timer)
+extern inline void Timer_set_seconds_based_on_type(Timer *restrict timer)
 {
   float minutes;
   switch (timer->type) {
@@ -57,11 +57,14 @@ void Timer_set_seconds_based_on_type(Timer *restrict timer)
     case LONG_BREAK_TYPE:
       minutes = long_break_minutes;
     break;
+
+    case NULL_TYPE:
+      break;
   }
   timer->seconds = minutes*SECONDS_IN_MINUTES;
 }
 
-void Timer_cycle_type(Timer *restrict timer)
+extern inline void Timer_cycle_type(Timer *restrict timer)
 {
   switch (timer->type) {
     case POMODORO_TYPE:
@@ -75,19 +78,21 @@ void Timer_cycle_type(Timer *restrict timer)
     break;
     case LONG_BREAK_TYPE:
       return Timer_initialize(timer);
+    case NULL_TYPE:
+      break;
   }
   if (timer->pomodoro_count <= 0) {
     timer->type = LONG_BREAK_TYPE;
   }
 }
 
-void Timer_initialize(Timer *restrict timer)
+extern inline void Timer_initialize(Timer *restrict timer)
 {
   timer->pomodoro_count = pomodoro_count;
   timer->type = POMODORO_TYPE;
 }
 
-void read_format_from_optind(int argc, char *argv[], const char ** output_str)
+extern inline void read_format_from_optind(int argc, char *argv[], const char ** output_str)
 {
   while (optind < argc) {
     if (argv[optind][0] == '+') {
@@ -103,7 +108,7 @@ void read_format_from_optind(int argc, char *argv[], const char ** output_str)
     *output_str = timer_format;
 }
 
-int read_format_from_string(char*input_str,const char ** output_str)
+extern inline int read_format_from_string(char*restrict input_str,const char **restrict output_str)
 {
   if (input_str[0] == '+') {
     *output_str = input_str+1;
@@ -115,7 +120,7 @@ int read_format_from_string(char*input_str,const char ** output_str)
   return EXIT_SUCCESS;
 }
 
-static void divide_seconds_minutes_hours(unsigned int * seconds, unsigned int * minutes, unsigned int * hours)
+inline static void divide_seconds_minutes_hours(unsigned int * seconds, unsigned int * minutes, unsigned int * hours)
 {
   *hours = (*seconds)/(SECONDS_IN_HOUR);
   *seconds-= (*hours)*SECONDS_IN_HOUR;
@@ -125,7 +130,7 @@ static void divide_seconds_minutes_hours(unsigned int * seconds, unsigned int * 
 }
 
 // Maybe I'll use this some day
-char * Timer_time_left(Timer *restrict timer)
+extern inline char * Timer_time_left(Timer *restrict timer)
 {
   unsigned int seconds = timer->seconds, hours, minutes;
   divide_seconds_minutes_hours(&seconds, &minutes, &hours);
@@ -152,7 +157,7 @@ struct timer_format_handler_args{
   char format_char;
 };
 
-const char * timer_type_string(TimerType type)
+inline extern const char * timer_type_string(TimerType type)
 {
   switch (type) {
     case NULL_TYPE:
@@ -166,8 +171,8 @@ const char * timer_type_string(TimerType type)
   }
 }
 
-static char *
-Timer_format_character(void *arguments, char format_char)
+inline static char *
+Timer_format_character(void *restrict arguments, char format_char)
 {
   struct timer_format_handler_args * args = arguments;
   char *str;
@@ -196,13 +201,13 @@ Timer_format_character(void *arguments, char format_char)
   return str;
 }
 
-char * Timer_resolve_format(Timer *restrict timer, char const *format)
+extern inline char * Timer_resolve_format(Timer *restrict timer, char const *format)
 {
   struct timer_format_handler_args args = {.timer = timer };
   return resolve_format(format,Timer_format_character, &args);
 }
 
-void Timer_print_format(Timer *restrict timer, const char * format)
+extern inline void Timer_print_format(Timer *restrict timer, const char * format)
 {
   char * str = Timer_resolve_format(timer, format);
   puts(str);
@@ -211,7 +216,7 @@ void Timer_print_format(Timer *restrict timer, const char * format)
 
 // This method DOES NOT flush the output afterwards.
 // Do the flushing yourself (if you need to)
-void Timer_print(Timer *restrict timer)
+extern inline void Timer_print(Timer *restrict timer)
 {
   unsigned int seconds = timer->seconds, hours, minutes;
   divide_seconds_minutes_hours(&seconds, &minutes, &hours);
@@ -223,25 +228,23 @@ void Timer_print(Timer *restrict timer)
   }
 }
 
-const char * Timer_before_time(TimerType type)
+extern inline const char * Timer_before_time(TimerType type)
 {
   switch (type) {
     case POMODORO_TYPE:
       if (pomodoro_before_time != NULL)
         return pomodoro_before_time;
-    break;
     case SHORT_BREAK_TYPE:
       if (short_break_before_time != NULL)
          return short_break_before_time;
-    break;
     case LONG_BREAK_TYPE:
       if (long_break_before_time != NULL)
         return long_break_before_time;
-    break;
+    case NULL_TYPE:
+      return "";
   }
-  return "";
 }
-void Timer_print_before_time(Timer timer)
+extern inline void Timer_print_before_time(Timer timer)
 {
   const char * before_time = Timer_before_time(timer.type);
   printf("%s", before_time);

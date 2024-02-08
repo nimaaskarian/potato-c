@@ -121,7 +121,7 @@ pid_t pid_at_index(unsigned int selected_index)
 
 int connect_socket(int port, char * server_address)
 {
-  int status, valread, client_fd;
+  int status, client_fd;
   struct sockaddr_in serv_addr;
   if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     return -1;
@@ -153,7 +153,7 @@ char * send_req_return_str(SocketRequest req, int sockfd)
 
   send(sockfd, request, size, 0);
   free(request);
-  int valread = read(sockfd, buffer, 1024 - 1);
+  read(sockfd, buffer, 1024 - 1);
   close(sockfd);
 
   return buffer;
@@ -172,7 +172,6 @@ int send_socket_request_with_fd(SocketRequest req, int sockfd)
 int send_socket_request_return_num(SocketRequest req, int pid, char * server_address)
 {
   int port = read_sock_port_from_pid_file(pid);
-  // printf("%d\n",port);
   int sockfd = connect_socket(port,server_address);
   if (sockfd == NO_PORT)
     return NO_PORT;
@@ -188,8 +187,6 @@ Timer get_local_timer_from_pid(int pid)
 
 Timer get_timer_from_port(int port, char * server_address)
 {
-  // int port = read_sock_port_from_pid_file(pid);
-  // printf("%d\n",port);
   int sockfd = connect_socket(port,server_address);
   char * buffer = send_req_return_str(REQ_TIMER_FULL, sockfd);
 

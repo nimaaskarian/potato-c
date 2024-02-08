@@ -29,7 +29,7 @@ typedef struct {
 Timer timer;
 App app;
 
-void quit(int signum)
+extern inline void quit(int signum)
 {
   remove_pid_file(getpid());
   if (app.new_line_at_quit)
@@ -41,7 +41,7 @@ void quit(int signum)
   exit(1);
 }
 
-void read_options_to_app(int argc, char*argv[])
+extern inline void read_options_to_app(int argc, char*argv[])
 {
   int ch;
   while ((ch = getopt(argc, argv, "fnpNs")) != -1) {
@@ -67,7 +67,7 @@ void read_options_to_app(int argc, char*argv[])
 }
 
 
-void run_before_command_based_on_timertype(TimerType type)
+extern inline void run_before_command_based_on_timertype(TimerType type)
 {
   switch (type) {
     case POMODORO_TYPE:
@@ -84,34 +84,37 @@ void run_before_command_based_on_timertype(TimerType type)
       for (unsigned int i = 0; i < LENGTH(ON_LONG_BREAK_START_COMMANDS); i++)
         (void)system(ON_LONG_BREAK_START_COMMANDS[i]);
       break;
+
+    case NULL_TYPE:
+      break;
   }
 }
 
-void print_all()
+inline void print_all()
 {
   Timer_print_format(&timer, app.format);
   if (app.flush)
     fflush(stdout);
 }
 
-void send_notification_based_on_timertype(TimerType type)
+extern inline void send_notification_based_on_timertype(TimerType type)
 {
   switch (type) {
     case POMODORO_TYPE:
       send_notification(pomodoro_notif);
       break;
-
     case SHORT_BREAK_TYPE: 
       send_notification(short_break_notif);
       break;
-
     case LONG_BREAK_TYPE: 
       send_notification(long_break_notif);
+      break;
+    default:
       break;
   }
 }
 
-void on_cycle(Timer * restrict timer) {
+extern inline void on_cycle(Timer * restrict timer) {
   if (!timer->paused)
     run_before_command_based_on_timertype(timer->type);
 
@@ -119,7 +122,7 @@ void on_cycle(Timer * restrict timer) {
     send_notification_based_on_timertype(timer->type);
 }
 
-void start_app_loop()
+extern inline void start_app_loop()
 {
   while (1) {
     if (!timer.paused) {
@@ -129,7 +132,7 @@ void start_app_loop()
   }
 }
 
-void pause_timer_run_cmds() 
+extern inline void pause_timer_run_cmds() 
 {
   if (timer.paused)
     return;
@@ -138,7 +141,7 @@ void pause_timer_run_cmds()
     (void)system(ON_PAUSE_COMMANDS[i]);
 }
 
-void unpause_timer_run_cmds()
+extern inline void unpause_timer_run_cmds()
 {
   if (!timer.paused)
     return;
@@ -147,7 +150,7 @@ void unpause_timer_run_cmds()
     (void)system(ON_UNPAUSE_COMMANDS[i]);
 }
 
-void skip_signal_handler(int signum)
+extern inline void skip_signal_handler(int signum)
 {
   Timer_cycle_type(&timer);
   Timer_set_seconds_based_on_type(&timer);
@@ -162,7 +165,7 @@ void skip_signal_handler(int signum)
   }
 }
 
-void initialize_app()
+inline void initialize_app()
 {
   app.flush = 0;
   app.notification = 0;
@@ -172,7 +175,7 @@ void initialize_app()
   app.format = NULL;
 }
 
-void reset_signal_handler()
+extern inline void reset_signal_handler()
 {
   Timer_initialize(&timer);
   Timer_set_seconds_based_on_type(&timer);
@@ -183,7 +186,7 @@ void reset_signal_handler()
 }
 
 
-void pause_signal_handler()
+extern inline void pause_signal_handler()
 {
   pause_timer_run_cmds();
   if (!app.notification)
@@ -191,7 +194,7 @@ void pause_signal_handler()
   send_notification(paused_notif);
 }
 
-void unpause_signal_handler()
+extern inline void unpause_signal_handler()
 {
   unpause_timer_run_cmds();
   if (!app.notification)
@@ -199,7 +202,7 @@ void unpause_signal_handler()
   send_notification(unpaused_notif);
 }
 
-void toggle_pause_signal_handler()
+extern inline void toggle_pause_signal_handler()
 {
   if (timer.paused)
     unpause_timer_run_cmds();
@@ -214,7 +217,7 @@ void toggle_pause_signal_handler()
     send_notification(unpaused_notif);
 }
 
-void increase_10sec_signal_handler()
+extern inline void increase_10sec_signal_handler()
 {
   timer.seconds+=10;
 
@@ -223,7 +226,7 @@ void increase_10sec_signal_handler()
 
 }
 
-void decrease_10sec_signal_handler()
+extern inline void decrease_10sec_signal_handler()
 {
   if (timer.seconds > 10)
     timer.seconds-=10;
@@ -234,7 +237,7 @@ void decrease_10sec_signal_handler()
     print_all();
 }
 
-void increase_pomodoro_count_signal_handler()
+extern inline void increase_pomodoro_count_signal_handler()
 {
   timer.pomodoro_count ++;
 
@@ -242,7 +245,7 @@ void increase_pomodoro_count_signal_handler()
     print_all();
 }
 
-void decrease_pomodoro_count_signal_handler()
+extern inline void decrease_pomodoro_count_signal_handler()
 {
   if (timer.pomodoro_count > 0)
     timer.pomodoro_count --;
@@ -251,7 +254,7 @@ void decrease_pomodoro_count_signal_handler()
     print_all();
 }
 
-void assign_signals_to_handlers()
+extern inline void assign_signals_to_handlers()
 {
   signal(SIG_PAUSE, pause_signal_handler);
   signal(SIG_UNPAUSE, unpause_signal_handler);
@@ -275,7 +278,7 @@ void assign_signals_to_handlers()
   signal(SIGALRM, quit);
 }
 
-void *run_sock_server_thread(void *arg)
+extern inline void *run_sock_server_thread(void *arg)
 {
   int port = next_available_sock_port();
   remove_pid_file_by_port(port);
@@ -356,6 +359,8 @@ void *run_sock_server_thread(void *arg)
         number = timer.paused;
         break;
       }
+      case REQ_TIMER_FULL:
+        break;
     }
     size_t message_size;
     if (req == REQ_TIMER_FULL) {

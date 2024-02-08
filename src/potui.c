@@ -32,7 +32,7 @@ enum QUIT_MENU input_quit_menu(int ch)
   return QUIT_NONE;
 }
 
-void printw_pid(char *pid_str, int index)
+inline void printw_pid(char *restrict pid_str, int index)
 {
   mvprintw(index, 0, "%s\n", pid_str);
 }
@@ -43,7 +43,7 @@ typedef struct {
   pid_t pid;
 } DrawPidsArgs;
 
-void fix_pid_index(DrawPidsArgs * args)
+inline void fix_pid_index(DrawPidsArgs * restrict args)
 {
   if (args->index < 0) {
     args->index = args->length ? args->length-1 : 0;
@@ -55,7 +55,7 @@ void fix_pid_index(DrawPidsArgs * args)
   }
 }
 
-pid_t handle_input_pid_menu(DrawPidsArgs *args)
+inline pid_t handle_input_pid_menu(DrawPidsArgs *restrict args)
 {
   int ch = getch();
   if (input_quit_menu(ch) == QUIT_QUIT) ncurses_quit();
@@ -89,7 +89,7 @@ pid_t handle_input_pid_menu(DrawPidsArgs *args)
   return pid;
 }
 
-void draw_pids(DrawPidsArgs * args)
+inline void draw_pids(DrawPidsArgs * restrict args)
 {
   erase();
   if (args->length) {
@@ -103,7 +103,7 @@ void draw_pids(DrawPidsArgs * args)
   refresh();
 }
 
-void * get_pids_length_sleep(void* arguments)
+extern inline void * get_pids_length_sleep(void* restrict arguments)
 {
   DrawPidsArgs * args = arguments;
   while (args->pid == 0) {
@@ -115,7 +115,7 @@ void * get_pids_length_sleep(void* arguments)
   pthread_exit(EXIT_SUCCESS);
 }
 
-pid_t pid_selection_menu(int * init_index)
+inline pid_t pid_selection_menu(int * restrict init_index)
 {
   DrawPidsArgs args = {.length = get_pids_length(), .index = *init_index};
     if (args.length == 1)
@@ -135,7 +135,7 @@ pid_t pid_selection_menu(int * init_index)
   return args.pid;
 }
 
-int handle_input_timer(int ch, pid_t pid)
+inline int handle_input_timer(int ch, pid_t pid)
 {
   switch (ch) {
     case 'p':
@@ -181,7 +181,7 @@ typedef struct {
   pid_t pid;
 } PrintTimerArgs;
 
-void printw_timer(PrintTimerArgs * args) 
+inline void printw_timer(PrintTimerArgs * args) 
 {
   if (!args->timer.paused || args->timer.type != args->last_type) {
     ncurses_clear_lines_from_to(0,3);
@@ -196,7 +196,7 @@ void printw_timer(PrintTimerArgs * args)
   refresh();
 }
 
-void * get_and_printw_timer(void * arguments)
+extern inline void * get_and_printw_timer(void * arguments)
 {
   PrintTimerArgs * args = arguments;
   while (1) {
@@ -211,7 +211,7 @@ void * get_and_printw_timer(void * arguments)
 }
 
 
-void timer_loop(pid_t pid)
+inline void timer_loop(pid_t pid)
 {
   PrintTimerArgs args = {.last_type = NULL_TYPE, .pid = pid};
   pthread_t print_timer_thread;
