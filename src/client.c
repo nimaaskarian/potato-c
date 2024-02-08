@@ -13,7 +13,7 @@
 #include "../include/timer.h"
 #include "../include/pidfile.h"
 
-#define handle_kill(NAME, SIG) void handle_##NAME(char *str, int index)\
+#define handle_kill(NAME, SIG) extern inline void handle_##NAME(char *str, int index)\
 {\
   kill(atoi(str), SIG);\
 }
@@ -29,7 +29,7 @@ handle_kill(increase_pomodoro_count, SIG_INC_POMODORO_COUNT);
 handle_kill(decrease_pomodoro_count, SIG_DEC_POMODORO_COUNT);
 handle_kill(reset_pomodoro, SIG_RESET);
 
-void run_function_on_pid_file_index(void(* handler)(char *, int index), int selected_index)
+extern inline void run_function_on_pid_file_index(void(* handler)(char *, int index), int selected_index)
 {
   DIR *dp;
   struct dirent *ep;
@@ -51,12 +51,12 @@ void run_function_on_pid_file_index(void(* handler)(char *, int index), int sele
   }
 }
 
-void handle_remove_pid(char *name, int index)
+extern inline void handle_remove_pid(char *name, int index)
 {
   remove_pid_file(atoi(name));
 }
 
-void run_function_on_pid_file_pid(void(* handler)(char *, int index), int selected_pid)
+extern inline void run_function_on_pid_file_pid(void(* handler)(char *, int index), int selected_pid)
 {
   DIR *dp;
   struct dirent *ep;
@@ -78,7 +78,7 @@ void run_function_on_pid_file_pid(void(* handler)(char *, int index), int select
   }
 }
 
-unsigned int get_pids_length()
+extern inline unsigned int get_pids_length()
 {
   DIR *dp;
   struct dirent *ep;
@@ -97,7 +97,7 @@ unsigned int get_pids_length()
   return output;
 }
 
-pid_t pid_at_index(unsigned int selected_index)
+extern inline pid_t pid_at_index(unsigned int selected_index)
 {
   DIR *dp;
   struct dirent *ep;
@@ -119,7 +119,7 @@ pid_t pid_at_index(unsigned int selected_index)
   return output;
 }
 
-int connect_socket(int port, char * server_address)
+extern inline int connect_socket(int port, char * server_address)
 {
   int status, client_fd;
   struct sockaddr_in serv_addr;
@@ -145,7 +145,7 @@ int connect_socket(int port, char * server_address)
   return client_fd;
 }
 
-char * send_req_return_str(SocketRequest req, int sockfd)
+extern inline char * send_req_return_str(SocketRequest req, int sockfd)
 {
   char *buffer = malloc(sizeof(char)*1024);
   char* request;
@@ -159,7 +159,7 @@ char * send_req_return_str(SocketRequest req, int sockfd)
   return buffer;
 }
 
-int send_socket_request_with_fd(SocketRequest req, int sockfd)
+extern inline int send_socket_request_with_fd(SocketRequest req, int sockfd)
 {
   char * buffer = send_req_return_str(req, sockfd);
 
@@ -169,7 +169,7 @@ int send_socket_request_with_fd(SocketRequest req, int sockfd)
   return output;
 }
 
-int send_socket_request_return_num(SocketRequest req, int pid, char * server_address)
+extern inline int send_socket_request_return_num(SocketRequest req, int pid, char * server_address)
 {
   int port = read_sock_port_from_pid_file(pid);
   int sockfd = connect_socket(port,server_address);
