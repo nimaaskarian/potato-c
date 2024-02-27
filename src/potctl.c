@@ -4,13 +4,14 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "../config.h"
 #include "../include/client.h"
 #include "../include/timer.h"
 
 typedef struct {
-  bool loop_flag;
+  bool loop_flag, flush_output;
   char server_address[16];
   int port;
   const char * format;
@@ -53,24 +54,27 @@ void get_seconds(char *pid_str, int index)
   printf("%d\n", send_socket_request_return_num(REQ_SECONDS,atoi(pid_str), "127.0.0.1"));
 }
 
-void get_timer_one_time(char *pid_str, int index)
+int print_timer_pidstr(char * pid_str)
 {
   Timer timer = get_local_timer_from_pid(atoi(pid_str));
   if (timer.type == NULL_TYPE)
-    return;
+    return EXIT_FAILURE;
 
   Timer_print_format(&timer, app.format);
+  if (app.flush_output)
+    fflush(stdout);
+
+  return EXIT_SUCCESS;
+}
+
+void get_timer_one_time(char *pid_str, int index)
+{
+  print_timer_pidstr(pid_str);
 }
 
 void get_timer_each_second(char *pid_str, int index)
 {
-  Timer timer;
-  while (1) {
-    timer = get_local_timer_from_pid(atoi(pid_str));
-    if (timer.type == NULL_TYPE)
-      break;
-
-    Timer_print_format(&timer, app.format);
+  while (print_timer_pidstr(pid_str) == EXIT_SUCCESS) {
     sleep(1);
   }
 }
@@ -95,10 +99,13 @@ void read_options_to_app(int argc, char *argv[])
     shift_from_argv = 1;
   int ch;
   while ((ch = getopt(argc-shift_from_argv, argv+shift_from_argv,
-                      "1::T::S::c::lu::L::s::p::t::q::d::i::I::D::r::a:A:")) != -1) {
+                      "1::T::S::c::lu::L::s::p::t::q::d::i::I::D::r::a:A:f")) != -1) {
     switch (ch) {
       case 'l': 
         list_all_timers();
+      break;
+      case 'f': 
+        app.flush_output = true;
       break;
       case 'A':
         app.loop_flag = true;
@@ -142,6 +149,9 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
       }
       Timer_print_format(&timer, app.format);
+      if (app.flush_output)
+        fflush(stdout);
+
       if (!app.loop_flag )
         break;
       sleep(1);
