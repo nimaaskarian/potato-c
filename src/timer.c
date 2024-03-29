@@ -187,7 +187,7 @@ Timer_format_character(void *restrict arguments, char format_char)
     break;
     case 'f':
       fflush(stdout);
-      asprintf(&str, "");
+      str = malloc(0);
     break;
     case 'b':
       asprintf(&str, "%s", Timer_before_time(args->timer->type));

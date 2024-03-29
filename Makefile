@@ -52,7 +52,13 @@ test: ${DEB}/${TESTS_NAME}
 	@echo Running tests:
 	@./${DEB}/${TESTS_NAME} && echo Tests are looking good!
 
+SHELL_CONFIGS = on-pomodoro.sh on-short-break.sh on-long-break.sh on-pause.sh on-unpause.sh
 install: all install_options ${MAN_PAGES}
+	mkdir -p ${CONFIG_DIR}
+	for config in ${SHELL_CONFIGS}; do \
+		touch ${CONFIG_DIR}/$$config; \
+		chmod +x ${CONFIG_DIR}/$$config; \
+	done
 	mkdir -p ${DESTDIR}${PREFIX}/bin
 	for bin in ${BINS_PATHS}; do \
 		cp -f $$bin ${DESTDIR}${PREFIX}/bin; \
@@ -75,6 +81,7 @@ install_options:
 	@echo "DESTDIR  = ${DESTDIR}"
 	@echo "PREFIX   = ${PREFIX}"
 	@echo "MANPREFIX   = ${MANPREFIX}"
+	@echo "CONFIG   = ${CONFIG_DIR}"
 
 options:
 	@echo potato build options:
