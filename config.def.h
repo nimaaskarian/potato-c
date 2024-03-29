@@ -17,15 +17,23 @@ static const char * long_break_before_time = "LB";
 static const char * timer_format = "%b %t P %p";
 
 #define DISOWN_NULL " &> /dev/null & disown"
+#define TO_NULL " &> /dev/null"
+#define STRINGIFY2(X) #X
+#define STRINGIFY(X) STRINGIFY2(X)
 static const char* ON_POMODORO_START_COMMANDS[] = {
+  CONFIG_DIR "/on-pomodoro.sh" TO_NULL
 };
 static const char* ON_SHORT_BREAK_START_COMMANDS[] = {
+  CONFIG_DIR "/on-short-break.sh" TO_NULL
 };
 static const char* ON_LONG_BREAK_START_COMMANDS[] = {
+  CONFIG_DIR "/on-long-break.sh" TO_NULL
 };
 static const char* ON_PAUSE_COMMANDS[] = {
+  CONFIG_DIR "/on-pause.sh" TO_NULL
 };
 static const char* ON_UNPAUSE_COMMANDS[] = {
+  CONFIG_DIR "/on-unpause.sh" TO_NULL
 };
 
 static const int pomodoro_minutes = 25;
