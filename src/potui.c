@@ -55,6 +55,20 @@ inline void fix_pid_index(DrawPidsArgs * restrict args)
   }
 }
 
+inline void draw_pids(DrawPidsArgs * restrict args)
+{
+  erase();
+  if (args->length) {
+    args->length = run_function_on_pid_file_index(printw_pid,EVERY_MEMBER);
+    attron(COLOR_PAIR(1));
+    run_function_on_pid_file_index(printw_pid,args->index);
+    attroff(COLOR_PAIR(1));
+  } else {
+    mvprintw(0,0, "No daemons found right now.");
+  }
+  refresh();
+}
+
 inline pid_t handle_input_pid_menu(DrawPidsArgs *restrict args)
 {
   int ch = getch();
@@ -78,6 +92,10 @@ inline pid_t handle_input_pid_menu(DrawPidsArgs *restrict args)
       run_function_on_pid_file_index(handle_quit, args->index);
       args->length--;
       break;
+    case 'r':
+      args->length = get_pids_length();
+      draw_pids(args);
+      break;
     case 'G':
       args->index = args->length - 1;
       break;
@@ -89,40 +107,11 @@ inline pid_t handle_input_pid_menu(DrawPidsArgs *restrict args)
   return pid;
 }
 
-inline void draw_pids(DrawPidsArgs * restrict args)
-{
-  erase();
-  if (args->length) {
-    run_function_on_pid_file_index(printw_pid,EVERY_MEMBER);
-    attron(COLOR_PAIR(1));
-    run_function_on_pid_file_index(printw_pid,args->index);
-    attroff(COLOR_PAIR(1));
-  } else {
-    mvprintw(0,0, "No daemons found right now.");
-  }
-  refresh();
-}
-
-extern inline void * get_pids_length_sleep(void* restrict arguments)
-{
-  DrawPidsArgs * args = arguments;
-  while (args->pid == 0) {
-    args->length = get_pids_length();
-
-    draw_pids(args);
-    sleep(2);
-  }
-  pthread_exit(EXIT_SUCCESS);
-}
-
 inline pid_t pid_selection_menu(int * restrict init_index)
 {
   DrawPidsArgs args = {.length = get_pids_length(), .index = *init_index};
     if (args.length == 1)
       args.pid = pid_at_index(0);
-
-  pthread_t get_pids_thread;
-  pthread_create(&get_pids_thread, NULL, get_pids_length_sleep, &args);
 
   draw_pids(&args);
 
@@ -131,7 +120,6 @@ inline pid_t pid_selection_menu(int * restrict init_index)
     draw_pids(&args);
   }
   *init_index = args.index;
-  pthread_cancel(get_pids_thread);
   return args.pid;
 }
 
@@ -236,6 +224,7 @@ int main(int argc, char *argv[])
   int init_pid_index = 0;
   while (1) {
     pid_t pid = pid_selection_menu(&init_pid_index);
+    erase();
 
     timer_loop(pid);
   }

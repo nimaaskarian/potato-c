@@ -29,7 +29,7 @@ handle_kill(increase_pomodoro_count, SIG_INC_POMODORO_COUNT);
 handle_kill(decrease_pomodoro_count, SIG_DEC_POMODORO_COUNT);
 handle_kill(reset_pomodoro, SIG_RESET);
 
-extern inline void run_function_on_pid_file_index(void(* handler)(char *, int index), int selected_index)
+extern inline size_t run_function_on_pid_file_index(void(* handler)(char *, int index), int selected_index)
 {
   DIR *dp;
   struct dirent *ep;
@@ -47,8 +47,8 @@ extern inline void run_function_on_pid_file_index(void(* handler)(char *, int in
     }
 
     (void) closedir (dp);
-    return;
   }
+  return index;
 }
 
 extern inline void handle_remove_pid(char *name, int index)
