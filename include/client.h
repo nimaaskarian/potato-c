@@ -22,7 +22,7 @@ handle_kill_declare(increase_pomodoro_count, SIG_INC_POMODORO_COUNT);
 handle_kill_declare(decrease_pomodoro_count, SIG_DEC_POMODORO_COUNT);
 handle_kill_declare(reset_pomodoro, SIG_RESET);
 
-void run_function_on_pid_file_index(void(* handler)(char *, int index), int selected_index);
+size_t run_function_on_pid_file_index(void(* handler)(char *, int index), int selected_index);
 void run_function_on_pid_file_pid(void(* handler)(char *, int index), int selected_pid);
 int connect_socket(int port, char * server_address);
 int send_socket_request_return_num(SocketRequest req, int pid, char * server_address);
