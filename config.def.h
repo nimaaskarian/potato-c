@@ -16,10 +16,7 @@ static const char * long_break_before_time = "LB";
 
 static const char * timer_format = "%b %t P %p";
 
-#define DISOWN_NULL " &> /dev/null & disown"
 #define TO_NULL " &> /dev/null"
-#define STRINGIFY2(X) #X
-#define STRINGIFY(X) STRINGIFY2(X)
 static const char* ON_POMODORO_START_COMMANDS[] = {
   CONFIG_DIR "/on-pomodoro.sh" TO_NULL
 };
