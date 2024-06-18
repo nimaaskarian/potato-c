@@ -1,4 +1,3 @@
-#include <math.h>
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
@@ -49,13 +48,13 @@ extern inline void Timer_set_seconds_based_on_type(Timer *restrict timer)
   float minutes;
   switch (timer->type) {
     case POMODORO_TYPE:
-      minutes = pomodoro_minutes;
+      minutes = timer->pomodoro_minutes;
     break;
     case SHORT_BREAK_TYPE:
-      minutes = short_break_minutes;
+      minutes = timer->short_break_minutes;
     break;
     case LONG_BREAK_TYPE:
-      minutes = long_break_minutes;
+      minutes = timer->long_break_minutes;
     break;
 
     case NULL_TYPE:
@@ -90,6 +89,13 @@ extern inline void Timer_initialize(Timer *restrict timer)
 {
   timer->pomodoro_count = pomodoro_count;
   timer->type = POMODORO_TYPE;
+}
+
+extern inline void Timer_set_default_time(Timer *restrict timer)
+{
+  timer->long_break_minutes = default_long_break_minutes;
+  timer->short_break_minutes = default_short_break_minutes;
+  timer->pomodoro_minutes = default_pomodoro_minutes;
 }
 
 extern inline void read_format_from_optind(int argc, char *argv[], const char ** output_str)

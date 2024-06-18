@@ -1,6 +1,5 @@
 #include <linux/limits.h>
 #include <string.h>
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -24,9 +23,9 @@ typedef struct {
   _Bool flush, notification;
   _Bool new_line_at_quit, print_pomodoro_count, run_socket;
   const char * format;
+  Timer timer;
 } App;
 
-Timer timer;
 App app;
 
 extern inline void quit(int signum)
@@ -44,7 +43,7 @@ extern inline void quit(int signum)
 extern inline void read_options_to_app(int argc, char*argv[])
 {
   int ch;
-  while ((ch = getopt(argc, argv, "fnpNs")) != -1) {
+  while ((ch = getopt(argc, argv, "fnpNsP:S:L:")) != -1) {
     switch (ch) {
       case 'f':
         app.flush = 1;
@@ -55,6 +54,15 @@ extern inline void read_options_to_app(int argc, char*argv[])
       case 'p':
         app.print_pomodoro_count = 1;
         break;
+      case 'P':
+        sscanf(optarg, "%d", &app.timer.pomodoro_minutes);
+      break;
+      case 'S':
+        sscanf(optarg, "%d", &app.timer.short_break_minutes);
+      break;
+      case 'L':
+        sscanf(optarg, "%d", &app.timer.long_break_minutes);
+      break;
       case 'N':
         app.new_line_at_quit = 1;
         break;
@@ -92,7 +100,7 @@ extern inline void run_before_command_based_on_timertype(TimerType type)
 
 inline void print_all()
 {
-  Timer_print_format(&timer, app.format);
+  Timer_print_format(&app.timer, app.format);
   if (app.flush)
     fflush(stdout);
 }
@@ -125,42 +133,42 @@ extern inline void on_cycle(Timer * restrict timer) {
 extern inline void start_app_loop()
 {
   while (1) {
-    if (!timer.paused) {
+    if (!app.timer.paused) {
       print_all();
     }
-    Timer_sleep_reduce_second(&timer, on_cycle);
+    Timer_sleep_reduce_second(&app.timer, on_cycle);
   }
 }
 
 extern inline void pause_timer_run_cmds() 
 {
-  if (timer.paused)
+  if (app.timer.paused)
     return;
-  Timer_pause(&timer);
+  Timer_pause(&app.timer);
   for (unsigned int i = 0; i < LENGTH(ON_PAUSE_COMMANDS); i++)
     (void)system(ON_PAUSE_COMMANDS[i]);
 }
 
 extern inline void unpause_timer_run_cmds()
 {
-  if (!timer.paused)
+  if (!app.timer.paused)
     return;
-  Timer_unpause(&timer);
+  Timer_unpause(&app.timer);
   for (unsigned int i = 0; i < LENGTH(ON_UNPAUSE_COMMANDS); i++)
     (void)system(ON_UNPAUSE_COMMANDS[i]);
 }
 
 extern inline void skip_signal_handler(int signum)
 {
-  Timer_cycle_type(&timer);
-  Timer_set_seconds_based_on_type(&timer);
+  Timer_cycle_type(&app.timer);
+  Timer_set_seconds_based_on_type(&app.timer);
 
-  run_before_command_based_on_timertype(timer.type);
+  run_before_command_based_on_timertype(app.timer.type);
 
   if (app.notification)
-    send_notification_based_on_timertype(timer.type);
+    send_notification_based_on_timertype(app.timer.type);
 
-  if (timer.paused) {
+  if (app.timer.paused) {
     print_all();
   }
 }
@@ -177,10 +185,10 @@ inline void initialize_app()
 
 extern inline void reset_signal_handler()
 {
-  Timer_initialize(&timer);
-  Timer_set_seconds_based_on_type(&timer);
+  Timer_initialize(&app.timer);
+  Timer_set_seconds_based_on_type(&app.timer);
 
-  run_before_command_based_on_timertype(timer.type);
+  run_before_command_based_on_timertype(app.timer.type);
 
   print_all();
 }
@@ -204,14 +212,14 @@ extern inline void unpause_signal_handler()
 
 extern inline void toggle_pause_signal_handler()
 {
-  if (timer.paused)
+  if (app.timer.paused)
     unpause_timer_run_cmds();
   else
     pause_timer_run_cmds();
 
   if (!app.notification)
     return;
-  if (timer.paused)
+  if (app.timer.paused)
     send_notification(paused_notif);
   else 
     send_notification(unpaused_notif);
@@ -219,38 +227,38 @@ extern inline void toggle_pause_signal_handler()
 
 extern inline void increase_10sec_signal_handler()
 {
-  timer.seconds+=10;
+  app.timer.seconds+=10;
 
-  if (timer.paused) 
+  if (app.timer.paused) 
     print_all();
 
 }
 
 extern inline void decrease_10sec_signal_handler()
 {
-  if (timer.seconds > 10)
-    timer.seconds-=10;
+  if (app.timer.seconds > 10)
+    app.timer.seconds-=10;
   else 
-    timer.seconds = 0;
+    app.timer.seconds = 0;
 
-  if (timer.paused)
+  if (app.timer.paused)
     print_all();
 }
 
 extern inline void increase_pomodoro_count_signal_handler()
 {
-  timer.pomodoro_count ++;
+  app.timer.pomodoro_count ++;
 
-  if (timer.paused)
+  if (app.timer.paused)
     print_all();
 }
 
 extern inline void decrease_pomodoro_count_signal_handler()
 {
-  if (timer.pomodoro_count > 0)
-    timer.pomodoro_count --;
+  if (app.timer.pomodoro_count > 0)
+    app.timer.pomodoro_count --;
 
-  if (timer.paused)
+  if (app.timer.paused)
     print_all();
 }
 
@@ -344,19 +352,19 @@ extern inline void *run_sock_server_thread(void *arg)
     int number;
     switch (req) {
       case REQ_SECONDS: {
-        number = timer.seconds;
+        number = app.timer.seconds;
         break;
       }
       case REQ_TYPE: {
-        number = timer.type;
+        number = app.timer.type;
         break;
       }
       case REQ_POMODOROS: {
-        number = timer.pomodoro_count;
+        number = app.timer.pomodoro_count;
         break;
       }
       case REQ_PAUSED: {
-        number = timer.paused;
+        number = app.timer.paused;
         break;
       }
       case REQ_TIMER_FULL:
@@ -364,7 +372,7 @@ extern inline void *run_sock_server_thread(void *arg)
     }
     size_t message_size;
     if (req == REQ_TIMER_FULL) {
-      message_size = asprintf(&message, "%d-%d-%d-%d", timer.seconds, timer.pomodoro_count, timer.paused, timer.type);
+      message_size = asprintf(&message, "%d-%d-%d-%d", app.timer.seconds, app.timer.pomodoro_count, app.timer.paused, app.timer.type);
     } else {
       message_size = asprintf(&message, "%d", number);
     }
@@ -379,12 +387,13 @@ int main(int argc, char *argv[])
 {
 
   initialize_app();
+  Timer_initialize(&app.timer);
+  Timer_set_default_time(&app.timer);
+
   read_options_to_app(argc, argv);
+  Timer_set_seconds_based_on_type(&app.timer);
 
-  Timer_initialize(&timer);
-  Timer_set_seconds_based_on_type(&timer);
-
-  run_before_command_based_on_timertype(timer.type);
+  run_before_command_based_on_timertype(app.timer.type);
 
   create_pid_file(getpid());
   assign_signals_to_handlers();
@@ -395,7 +404,7 @@ int main(int argc, char *argv[])
   }
 
   if (app.notification)
-    send_notification_based_on_timertype(timer.type);
+    send_notification_based_on_timertype(app.timer.type);
 
   start_app_loop();
 

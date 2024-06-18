@@ -22,12 +22,16 @@ typedef struct {
   unsigned int seconds;
   TimerType type;
   unsigned int pomodoro_count;
+  int pomodoro_minutes;
+  int short_break_minutes;
+  int long_break_minutes;
 } Timer;
 
 void Timer_sleep_reduce_second(Timer *restrict, void on_cycle(Timer * restrict));
 void Timer_set_seconds_based_on_type(Timer * timer);
 void Timer_cycle_type(Timer * timer);
 void Timer_initialize(Timer *timer);
+void Timer_set_default_time(Timer *timer);
 void Timer_print(Timer *timer);
 char * Timer_time_left(Timer *timer);
 void Timer_pause(Timer * timer);

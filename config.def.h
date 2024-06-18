@@ -33,6 +33,6 @@ static const char* ON_UNPAUSE_COMMANDS[] = {
   CONFIG_DIR "/on-unpause.sh" TO_NULL
 };
 
-static const int pomodoro_minutes = 25;
-static const int short_break_minutes = 5;
-static const int long_break_minutes = 30;
+static int default_pomodoro_minutes = 25;
+static int default_short_break_minutes = 5;
+static int default_long_break_minutes = 30;
