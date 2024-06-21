@@ -43,7 +43,7 @@ extern inline void quit(int signum)
 extern inline void read_options_to_app(int argc, char*argv[])
 {
   int ch;
-  while ((ch = getopt(argc, argv, "fnpNsP:S:L:")) != -1) {
+  while ((ch = getopt(argc, argv, "fnpNsP:S:L:C:")) != -1) {
     switch (ch) {
       case 'f':
         app.flush = 1;
@@ -55,13 +55,16 @@ extern inline void read_options_to_app(int argc, char*argv[])
         app.print_pomodoro_count = 1;
         break;
       case 'P':
-        sscanf(optarg, "%d", &app.timer.pomodoro_minutes);
+        app.timer.pomodoro_minutes = atoi(optarg);
+      break;
+      case 'C':
+        app.timer.initial_pomodoro_count = atoi(optarg);
       break;
       case 'S':
-        sscanf(optarg, "%d", &app.timer.short_break_minutes);
+        app.timer.short_break_minutes = atoi(optarg);
       break;
       case 'L':
-        sscanf(optarg, "%d", &app.timer.long_break_minutes);
+        app.timer.long_break_minutes = atoi(optarg);
       break;
       case 'N':
         app.new_line_at_quit = 1;
@@ -372,7 +375,7 @@ extern inline void *run_sock_server_thread(void *arg)
     }
     size_t message_size;
     if (req == REQ_TIMER_FULL) {
-      message_size = asprintf(&message, "%d-%d-%d-%d", app.timer.seconds, app.timer.pomodoro_count, app.timer.paused, app.timer.type);
+      message_size = asprintf(&message, "%u-%u-%d-%d", app.timer.seconds, app.timer.pomodoro_count, app.timer.paused, app.timer.type);
     } else {
       message_size = asprintf(&message, "%d", number);
     }
@@ -387,10 +390,10 @@ int main(int argc, char *argv[])
 {
 
   initialize_app();
-  Timer_initialize(&app.timer);
-  Timer_set_default_time(&app.timer);
-
+  Timer_set_default(&app.timer);
   read_options_to_app(argc, argv);
+
+  Timer_initialize(&app.timer);
   Timer_set_seconds_based_on_type(&app.timer);
 
   run_before_command_based_on_timertype(app.timer.type);

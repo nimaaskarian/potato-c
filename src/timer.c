@@ -87,15 +87,13 @@ extern inline void Timer_cycle_type(Timer *restrict timer)
 
 extern inline void Timer_initialize(Timer *restrict timer)
 {
-  timer->pomodoro_count = pomodoro_count;
+  timer->pomodoro_count = timer->initial_pomodoro_count;
   timer->type = POMODORO_TYPE;
 }
 
-extern inline void Timer_set_default_time(Timer *restrict timer)
+extern inline void Timer_set_default(Timer *restrict timer)
 {
-  timer->long_break_minutes = default_long_break_minutes;
-  timer->short_break_minutes = default_short_break_minutes;
-  timer->pomodoro_minutes = default_pomodoro_minutes;
+  *timer = default_timer;
 }
 
 extern inline void read_format_from_optind(int argc, char *argv[], const char ** output_str)
@@ -187,7 +185,7 @@ Timer_format_character(void *restrict arguments, char format_char)
     case 't':
       return Timer_time_left(args->timer);
     case 'p':
-      asprintf(&str, "%d", args->timer->pomodoro_count);
+      asprintf(&str, "%u", args->timer->pomodoro_count);
     break;
     case 'm':
       asprintf(&str, "%s", timer_type_string(args->timer->type));
