@@ -33,9 +33,9 @@ static const char* ON_UNPAUSE_COMMANDS[] = {
   CONFIG_DIR "/on-unpause.sh" TO_NULL
 };
 
-Timer default_timer = {
-  .initial_pomodoro_count = 4,
-  .pomodoro_minutes = 25,
-  .short_break_minutes = 5,
-  .long_break_minutes = 30,
-};
+#define default_timer (Timer){\
+.initial_pomodoro_count = 4,\
+.pomodoro_minutes = 25,\
+.short_break_minutes = 5,\
+.long_break_minutes = 30 \
+}
