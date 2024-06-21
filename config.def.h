@@ -1,7 +1,7 @@
 #include "include/utils.h"
+#include "include/timer.h"
 
 static const char * notification_format = "herbe '%t' '%d' &> /dev/null & disown";
-static const int pomodoro_count = 4;
 
 // Set to {NULL, NULL} If you want program to have no notifications on event
 static const notif_t pomodoro_notif     = {.title = "Pomodoro",     .body = "Time to focus!"};
@@ -16,10 +16,7 @@ static const char * long_break_before_time = "LB";
 
 static const char * timer_format = "%b %t P %p";
 
-#define DISOWN_NULL " &> /dev/null & disown"
 #define TO_NULL " &> /dev/null"
-#define STRINGIFY2(X) #X
-#define STRINGIFY(X) STRINGIFY2(X)
 static const char* ON_POMODORO_START_COMMANDS[] = {
   CONFIG_DIR "/on-pomodoro.sh" TO_NULL
 };
@@ -36,6 +33,9 @@ static const char* ON_UNPAUSE_COMMANDS[] = {
   CONFIG_DIR "/on-unpause.sh" TO_NULL
 };
 
-static const int pomodoro_minutes = 25;
-static const int short_break_minutes = 5;
-static const int long_break_minutes = 30;
+Timer default_timer = {
+  .initial_pomodoro_count = 4,
+  .pomodoro_minutes = 25,
+  .short_break_minutes = 5,
+  .long_break_minutes = 30,
+};

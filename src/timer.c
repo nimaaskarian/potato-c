@@ -1,4 +1,3 @@
-#include <math.h>
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
@@ -49,13 +48,13 @@ extern inline void Timer_set_seconds_based_on_type(Timer *restrict timer)
   float minutes;
   switch (timer->type) {
     case POMODORO_TYPE:
-      minutes = pomodoro_minutes;
+      minutes = timer->pomodoro_minutes;
     break;
     case SHORT_BREAK_TYPE:
-      minutes = short_break_minutes;
+      minutes = timer->short_break_minutes;
     break;
     case LONG_BREAK_TYPE:
-      minutes = long_break_minutes;
+      minutes = timer->long_break_minutes;
     break;
 
     case NULL_TYPE:
@@ -88,8 +87,13 @@ extern inline void Timer_cycle_type(Timer *restrict timer)
 
 extern inline void Timer_initialize(Timer *restrict timer)
 {
-  timer->pomodoro_count = pomodoro_count;
+  timer->pomodoro_count = timer->initial_pomodoro_count;
   timer->type = POMODORO_TYPE;
+}
+
+extern inline void Timer_set_default(Timer *restrict timer)
+{
+  *timer = default_timer;
 }
 
 extern inline void read_format_from_optind(int argc, char *argv[], const char ** output_str)
@@ -120,36 +124,37 @@ extern inline int read_format_from_string(char*restrict input_str,const char **r
   return EXIT_SUCCESS;
 }
 
-inline static void divide_seconds_minutes_hours(unsigned int * seconds, unsigned int * minutes, unsigned int * hours)
+typedef struct {
+  unsigned int seconds, minutes, hours;
+} NaiveTime;
+inline static NaiveTime divide_seconds_to_naive_time(unsigned int seconds)
 {
-  *hours = (*seconds)/(SECONDS_IN_HOUR);
-  *seconds-= (*hours)*SECONDS_IN_HOUR;
+  NaiveTime output;
   
-  *minutes = (*seconds)/SECONDS_IN_MINUTES;
-  *seconds = (*seconds)%SECONDS_IN_MINUTES;
-}
-
-// Maybe I'll use this some day
-extern inline char * Timer_time_left(Timer *restrict timer)
-{
-  unsigned int seconds = timer->seconds, hours, minutes;
-  divide_seconds_minutes_hours(&seconds, &minutes, &hours);
-
-  // MIN:SEC
-  //  00:00\0
-  size_t size = 6;
-  if (hours) {
-    size_t size_of_hours = int_length(hours);
-    size+=size_of_hours+1;
-  }
-  char * output;
-  if (hours) {
-    asprintf(&output, "%02u:%02u:%02u", hours, minutes, seconds);
-  } else {
-    asprintf(&output, "%02u:%02u", minutes, seconds);
-  }
+  output.hours = (seconds)/(SECONDS_IN_HOUR);
+  seconds -= (output.hours)*SECONDS_IN_HOUR;
+  
+  output.minutes = (seconds)/SECONDS_IN_MINUTES;
+  output.seconds = (seconds)%SECONDS_IN_MINUTES;
 
   return output;
+}
+
+char * NaiveTime_to_string(NaiveTime time) {
+  char * output;
+  if (time.hours) {
+    asprintf(&output, "%02u:%02u:%02u", time.hours, time.minutes, time.seconds);
+  } else {
+    asprintf(&output, "%02u:%02u", time.minutes, time.seconds);
+  }
+  return output;
+}
+
+extern inline char * Timer_time_left(Timer *restrict timer)
+{
+  NaiveTime time_left = divide_seconds_to_naive_time(timer->seconds);
+
+  return NaiveTime_to_string(time_left);
 }
 
 struct timer_format_handler_args{
@@ -180,7 +185,7 @@ Timer_format_character(void *restrict arguments, char format_char)
     case 't':
       return Timer_time_left(args->timer);
     case 'p':
-      asprintf(&str, "%d", args->timer->pomodoro_count);
+      asprintf(&str, "%u", args->timer->pomodoro_count);
     break;
     case 'm':
       asprintf(&str, "%s", timer_type_string(args->timer->type));
@@ -218,14 +223,9 @@ extern inline void Timer_print_format(Timer *restrict timer, const char * format
 // Do the flushing yourself (if you need to)
 extern inline void Timer_print(Timer *restrict timer)
 {
-  unsigned int seconds = timer->seconds, hours, minutes;
-  divide_seconds_minutes_hours(&seconds, &minutes, &hours);
-
-  if (hours) {
-    printf("%02u:%02u:%02u", hours, minutes, seconds);
-  } else {
-    printf("%02u:%02u", minutes, seconds);
-  }
+  char * timer_str = Timer_time_left(timer);
+  fputs(timer_str, stdout);
+  free(timer_str);
 }
 
 extern inline const char * Timer_before_time(TimerType type)
