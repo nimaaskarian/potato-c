@@ -70,7 +70,7 @@ void ncurses_ready_for_input()
 void str_n_at_i_appch(char * src, int n,int app_index, char ch)
 {
   app_index = min(n, app_index);
-  char *tmp = malloc(sizeof(char)*(n+1));
+  char tmp[n+1];
   for (int i = 0; i < app_index; i++) {
     tmp[i] = src[i];
   }
@@ -80,7 +80,6 @@ void str_n_at_i_appch(char * src, int n,int app_index, char ch)
   }
   strncpy(src, tmp, n);
   src[n] = '\0';
-  free(tmp);
 }
 
 int prev_space(char *str, int current_index)

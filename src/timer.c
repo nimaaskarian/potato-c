@@ -89,6 +89,7 @@ extern inline void Timer_initialize(Timer *restrict timer)
 {
   timer->pomodoro_count = timer->initial_pomodoro_count;
   timer->type = POMODORO_TYPE;
+  timer->paused = default_timer.paused;
 }
 
 extern inline void Timer_set_default(Timer *restrict timer)
@@ -188,14 +189,14 @@ Timer_format_character(void *restrict arguments, char format_char)
       asprintf(&str, "%u", args->timer->pomodoro_count);
     break;
     case 'm':
-      asprintf(&str, "%s", timer_type_string(args->timer->type));
+      str = strdup(timer_type_string(args->timer->type));
     break;
     case 'f':
       fflush(stdout);
-      str = malloc(0);
+      str = NULL;
     break;
     case 'b':
-      asprintf(&str, "%s", Timer_before_time(args->timer->type));
+      str = strdup(Timer_before_time(args->timer->type));
     break;
     default:
       errno = 1;
