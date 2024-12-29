@@ -284,7 +284,6 @@ extern inline void assign_signals_to_handlers()
   signal(SIGTERM, quit);
   signal(SIGQUIT, quit);
   signal(SIGTRAP, quit);
-  signal(SIGKILL, quit);
   signal(SIGPIPE, quit);
   signal(SIGALRM, quit);
 }
