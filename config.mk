@@ -3,10 +3,8 @@ NAME = potato-c
 PREFIX = /usr/local
 sysconfigdir =  /usr/share
 CONFIG_DIR = ${sysconfigdir}/${NAME}
-VERSION = 0.7.3
+VERSION = 0.7.4
 MANPREFIX = ${PREFIX}/share/man
 LDFLAGS = -lm
-CFLAGS := -std=gnu99 -O3 -finline-functions -flto -funroll-loops -Wall -Wno-deprecated-declarations
-CFLAGS = ${CFLAGS} -DCONFIG_DIR=\"$(CONFIG_DIR)\"
-
+CFLAGS = -std=gnu99 -O3 -finline-functions -flto -funroll-loops -Wall -Wno-deprecated-declarations -DCONFIG_DIR=\"$(CONFIG_DIR)\"
 DEBFLAGS = -g
