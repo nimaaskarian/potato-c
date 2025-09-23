@@ -74,7 +74,7 @@ ${DEB}/${TESTS_NAME}: ${OBJ_TESTS}
 	mkdir -p ${DEB}
 	$(CC) -o ${DEB}/${TESTS_NAME} ${OBJ_TESTS}
 
-${OBJ_CTL} ${OBJ_D} ${OBJ_TUI} ${OBJ_TESTS} ${OBJ_DEBUG}: include/signal.h config.h config.mk
+${OBJ_CTL} ${OBJ_D} ${OBJ_TUI} ${OBJ_TESTS} ${OBJ_DEBUG}: config.h config.mk
 
 install_options:
 	@echo potato install options:

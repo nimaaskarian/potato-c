@@ -307,13 +307,11 @@ extern inline void *run_sock_server_thread(void *arg)
   socklen_t addrlen = sizeof(address);
   char buffer[1024] = { 0 };
 
-  // Creating socket file descriptor
   if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
       perror("socket failed");
       exit(EXIT_FAILURE);
   }
 
-  // Forcefully attaching socket to the port 8080
   if (setsockopt(server_fd, SOL_SOCKET,
                  SO_REUSEADDR | SO_REUSEPORT, &opt,
                  sizeof(opt))) {
@@ -324,7 +322,6 @@ extern inline void *run_sock_server_thread(void *arg)
   address.sin_addr.s_addr = INADDR_ANY;
   address.sin_port = htons(port);
 
-  // Forcefully attaching socket to the port 8080
   if (bind(server_fd, (struct sockaddr*)&address,
            sizeof(address))
       < 0) {
@@ -402,8 +399,8 @@ int main(int argc, char *argv[])
   assign_signals_to_handlers();
 
   if (app.run_socket) {
-    pthread_t thread1;
-    pthread_create(&thread1, NULL, run_sock_server_thread, NULL);
+    pthread_t sockthread;
+    pthread_create(&sockthread, NULL, run_sock_server_thread, NULL);
   }
 
   if (app.notification)

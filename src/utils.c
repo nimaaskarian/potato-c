@@ -46,10 +46,10 @@ char * format_notification(void *arguments, char format_char)
   char *str;
   switch (format_char) {
     case 't':
-      asprintf(&str, "%s", args->notif.title);
+      str = strdup(args->notif.title);
     break;
     case 'b':
-      asprintf(&str, "%s", args->notif.body);
+      str = strdup(args->notif.body);
     break;
     case 'p':
       asprintf(&str, "%d", args->pid);
@@ -101,7 +101,9 @@ char* resolve_format(const char * format, char* handler(void*, char), void* args
       if (fmt_ptr[1] != '%') {
         char* string_formatted = handler(args, fmt_ptr[1]);
         int string_length = strlen(string_formatted);
-        free(string_formatted);
+        if (string_formatted) {
+          free(string_formatted);
+        }
         size += string_length - 1;
       }
       fmt_ptr++;
